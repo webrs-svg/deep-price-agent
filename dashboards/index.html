@@ -659,7 +659,8 @@
 
       // 5. Instant Live 3-Subagent Execution Directly from Phone Browser
       async function callGeminiGrounded(apiKey, prompt, jsonMode = false) {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const modelName = localStorage.getItem('ps_gemini_model') || 'gemini-3.8-flash';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const body = jsonMode
           ? {
               contents: [{ parts: [{ text: prompt }] }],
@@ -680,8 +681,25 @@
           throw new Error(`Gemini API Error (${res.status}): ${errText}`);
         }
         const data = await res.json();
-        const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-        return parts.map(p => p.text || '').join('\n');
+        const cand = data.candidates && data.candidates[0];
+        const parts = (cand && cand.content && cand.content.parts) || [];
+        let text = parts.map(p => p.text || '').join('\n');
+
+        // Append verified Google Search grounding URLs when in subagent search mode
+        if (!jsonMode && cand && cand.groundingMetadata && cand.groundingMetadata.groundingChunks) {
+          const links = cand.groundingMetadata.groundingChunks
+            .map(c => c.web && c.web.uri ? `- [${c.web.title || c.web.uri}](${c.web.uri})` : null)
+            .filter(Boolean);
+          if (links.length > 0) {
+            text += '\n\nGrounded URLs:\n' + Array.from(new Set(links)).slice(0, 12).join('\n');
+          }
+        }
+        return text;
+      }
+
+      function parseJsonSafe(raw) {
+        const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+        return JSON.parse(cleaned);
       }
 
       function setPillState(id, badgeId, state, label) {
@@ -764,7 +782,7 @@ ${dealOut}
 ${trustOut}`;
 
           const rawJson = await callGeminiGrounded(apiKey, synthPrompt, true);
-          const result = JSON.parse(rawJson);
+          const result = parseJsonSafe(rawJson);
           setPillState('st-synth', 'st-synth-badge', 'done', 'Complete ✓');
 
           const nowStr = new Date().toLocaleString();

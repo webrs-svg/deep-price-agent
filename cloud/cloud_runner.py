@@ -54,7 +54,7 @@ HISTORY_PATH = WORKSPACE_ROOT / "data" / "price_history.json"
 REPORTS_DIR = WORKSPACE_ROOT / "reports"
 DASHBOARD_PATH = WORKSPACE_ROOT / "dashboards" / "index.html"
 
-DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3-flash-preview")
+DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 
 
 def slugify(text: str) -> str:
