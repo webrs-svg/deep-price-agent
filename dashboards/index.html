@@ -291,6 +291,15 @@
           <input type="password" id="cfg-gemini-key" class="input" placeholder="AIzaSy..." />
         </div>
         <div class="field">
+          <label>Gemini Model &amp; Search Mode</label>
+          <select id="cfg-gemini-model" class="select">
+            <option value="auto">Auto (Smart Free-Tier Fallback)</option>
+            <option value="gemini-3.8-flash">gemini-3.8-flash (Latest Recommended)</option>
+            <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (High-Speed Lite)</option>
+            <option value="gemini-2.5-flash">gemini-2.5-flash (500 Free Grounded Searches/Day)</option>
+          </select>
+        </div>
+        <div class="field">
           <label>GitHub Repo (`owner/repo` for 24/7 Cloud Watch)</label>
           <input type="text" id="cfg-gh-repo" class="input" placeholder="username/deep-price-agent" />
         </div>
@@ -511,10 +520,14 @@
       const settingsDrawer = document.getElementById('settings-drawer');
       const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
       const cfgGeminiKey = document.getElementById('cfg-gemini-key');
+      const cfgGeminiModel = document.getElementById('cfg-gemini-model');
       const cfgGhRepo = document.getElementById('cfg-gh-repo');
       const cfgGhToken = document.getElementById('cfg-gh-token');
 
       cfgGeminiKey.value = localStorage.getItem('ps_gemini_key') || '';
+      if (cfgGeminiModel) {
+        cfgGeminiModel.value = localStorage.getItem('ps_gemini_model') || 'auto';
+      }
       cfgGhRepo.value = localStorage.getItem('ps_gh_repo') || 'webrs-svg/deep-price-agent';
       cfgGhToken.value = localStorage.getItem('ps_gh_token') || '';
 
@@ -523,6 +536,9 @@
       });
       document.getElementById('save-settings-btn').addEventListener('click', () => {
         localStorage.setItem('ps_gemini_key', cfgGeminiKey.value.trim());
+        if (cfgGeminiModel) {
+          localStorage.setItem('ps_gemini_model', cfgGeminiModel.value);
+        }
         localStorage.setItem('ps_gh_repo', cfgGhRepo.value.trim());
         localStorage.setItem('ps_gh_token', cfgGhToken.value.trim());
         settingsDrawer.classList.remove('open');
@@ -658,8 +674,9 @@
       });
 
       // 5. Instant Live 3-Subagent Execution Directly from Phone Browser
-      async function callGeminiGrounded(apiKey, prompt, jsonMode = false) {
-        const modelName = localStorage.getItem('ps_gemini_model') || 'gemini-3.8-flash';
+      const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+      async function callGeminiSingleAttempt(apiKey, modelName, prompt, jsonMode, useGrounding) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
         const body = jsonMode
           ? {
@@ -668,7 +685,7 @@
             }
           : {
               contents: [{ parts: [{ text: prompt }] }],
-              tools: [{ google_search: {} }],
+              ...(useGrounding ? { tools: [{ google_search: {} }] } : {}),
               generationConfig: { temperature: 0.2 }
             };
         const res = await fetch(url, {
@@ -678,7 +695,10 @@
         });
         if (!res.ok) {
           const errText = await res.text();
-          throw new Error(`Gemini API Error (${res.status}): ${errText}`);
+          const err = new Error(`Gemini API Error (${res.status}) on ${modelName}: ${errText}`);
+          err.status = res.status;
+          err.rawText = errText;
+          throw err;
         }
         const data = await res.json();
         const cand = data.candidates && data.candidates[0];
@@ -695,6 +715,62 @@
           }
         }
         return text;
+      }
+
+      async function callGeminiGrounded(apiKey, prompt, jsonMode = false) {
+        const pref = localStorage.getItem('ps_gemini_model') || 'auto';
+        // Build fallback chain:
+        // Note: On the unpaid Free Tier, Gemini 3.x models have 0 free quota for Google Search grounding (limit: 0),
+        // whereas gemini-2.5-flash includes 500 RPD free Google Search grounding!
+        // So in 'auto' or fallback mode, we try the preferred model with grounding, fall back to gemini-2.5-flash with grounding,
+        // and if all grounded quotas are exhausted, fall back to gemini-3.8-flash / gemini-3.5-flash-lite without grounding tool.
+        const attempts = [];
+        if (jsonMode) {
+          const primary = pref === 'auto' ? 'gemini-3.8-flash' : pref;
+          attempts.push({ model: primary, ground: false });
+          if (primary !== 'gemini-3.8-flash') attempts.push({ model: 'gemini-3.8-flash', ground: false });
+          if (primary !== 'gemini-3.5-flash-lite') attempts.push({ model: 'gemini-3.5-flash-lite', ground: false });
+        } else {
+          if (pref !== 'auto') {
+            attempts.push({ model: pref, ground: true });
+          }
+          attempts.push(
+            { model: 'gemini-3.8-flash', ground: true },
+            { model: 'gemini-2.5-flash', ground: true },
+            { model: 'gemini-3.5-flash-lite', ground: true },
+            { model: 'gemini-3.8-flash', ground: false },
+            { model: 'gemini-3.5-flash-lite', ground: false }
+          );
+        }
+
+        // Deduplicate attempts
+        const seen = new Set();
+        const uniqueAttempts = attempts.filter(a => {
+          const k = `${a.model}:${a.ground}`;
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+
+        let lastErr = null;
+        for (let i = 0; i < uniqueAttempts.length; i++) {
+          const { model, ground } = uniqueAttempts[i];
+          try {
+            return await callGeminiSingleAttempt(apiKey, model, prompt, jsonMode, ground);
+          } catch (err) {
+            lastErr = err;
+            const msg = String(err.rawText || err.message || '');
+            const isQuotaOrNotFound = err.status === 429 || err.status === 404 || err.status === 400 || err.status === 503 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota');
+            if (!isQuotaOrNotFound) {
+              throw err;
+            }
+            // If it's a rate limit (RPM) rather than a 0-quota restriction, wait briefly before next fallback
+            if (err.status === 429 && !msg.includes('limit: 0')) {
+              await sleep(1500);
+            }
+          }
+        }
+        throw lastErr;
       }
 
       function parseJsonSafe(raw) {
@@ -744,8 +820,8 @@
 
           const [scoutOut, dealOut, trustOut] = await Promise.all([
             callGeminiGrounded(apiKey, scoutPrompt).then(r => { setPillState('st-scout', 'st-scout-badge', 'done', 'Done ✓'); return r; }),
-            callGeminiGrounded(apiKey, dealPrompt).then(r => { setPillState('st-deal', 'st-deal-badge', 'done', 'Done ✓'); return r; }),
-            callGeminiGrounded(apiKey, trustPrompt).then(r => { setPillState('st-trust', 'st-trust-badge', 'done', 'Done ✓'); return r; })
+            sleep(350).then(() => callGeminiGrounded(apiKey, dealPrompt)).then(r => { setPillState('st-deal', 'st-deal-badge', 'done', 'Done ✓'); return r; }),
+            sleep(700).then(() => callGeminiGrounded(apiKey, trustPrompt)).then(r => { setPillState('st-trust', 'st-trust-badge', 'done', 'Done ✓'); return r; })
           ]);
 
           setPillState('st-synth', 'st-synth-badge', 'running', 'Synthesizing...');

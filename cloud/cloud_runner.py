@@ -110,19 +110,52 @@ async def run_grounded_subagent(
     prompt_text: str,
     system_instruction: str,
 ) -> str:
-    """Executes a single subagent with live Google Search Grounding via google-genai."""
+    """Executes a single subagent with live Google Search Grounding via google-genai, with automatic Free-Tier fallback."""
     from google.genai import types
 
     print(f"  [Subagent Start] -> {role_name}")
-    response = await client.aio.models.generate_content(
-        model=DEFAULT_MODEL,
-        contents=prompt_text,
-        config=types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            tools=[types.Tool(google_search=types.GoogleSearch())],
-            temperature=0.2,
-        ),
-    )
+    # Fallback chain:
+    # 1. Preferred model (e.g. gemini-3.8-flash) with Google Search grounding
+    # 2. gemini-2.5-flash with Google Search grounding (has 500 RPD free grounding quota on Free Tier)
+    # 3. gemini-3.8-flash / gemini-3.5-flash-lite without grounding tool if all search quotas are exhausted
+    attempts = [
+        (DEFAULT_MODEL, True),
+        ("gemini-2.5-flash", True),
+        ("gemini-3.5-flash-lite", True),
+        (DEFAULT_MODEL, False),
+        ("gemini-3.5-flash-lite", False),
+    ]
+    seen: set[tuple[str, bool]] = set()
+    unique_attempts = [a for a in attempts if not (a in seen or seen.add(a))]
+
+    response = None
+    last_exc: Exception | None = None
+    for model_name, use_grounding in unique_attempts:
+        try:
+            cfg = types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                tools=[types.Tool(google_search=types.GoogleSearch())] if use_grounding else None,
+                temperature=0.2,
+            )
+            response = await client.aio.models.generate_content(
+                model=model_name,
+                contents=prompt_text,
+                config=cfg,
+            )
+            break
+        except Exception as exc:
+            last_exc = exc
+            err_str = str(exc)
+            if any(k in err_str for k in ("429", "RESOURCE_EXHAUSTED", "quota", "404", "400", "503")):
+                print(f"  [Subagent Fallback] {role_name} hit quota/limit on {model_name} (grounding={use_grounding}), trying next fallback...")
+                if "429" in err_str and "limit: 0" not in err_str:
+                    await asyncio.sleep(1.5)
+                continue
+            raise
+
+    if response is None and last_exc is not None:
+        raise last_exc
+
     text = response.text or ""
     # Extract grounding URLs if available in metadata
     urls: list[str] = []
@@ -201,16 +234,29 @@ Net Landed Price = base_price + shipping - promo_discount - cashback_amount.
 Provide the structured JSON response including a rich, comprehensive `markdown_report`.
 """
 
-    response = await client.aio.models.generate_content(
-        model=DEFAULT_MODEL,
-        contents=synthesis_prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=agents_md,
-            response_mime_type="application/json",
-            response_schema=SynthesisResult,
-            temperature=0.1,
-        ),
-    )
+    response = None
+    last_exc: Exception | None = None
+    for model_name in dict.fromkeys([DEFAULT_MODEL, "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"]):
+        try:
+            response = await client.aio.models.generate_content(
+                model=model_name,
+                contents=synthesis_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=agents_md,
+                    response_mime_type="application/json",
+                    response_schema=SynthesisResult,
+                    temperature=0.1,
+                ),
+            )
+            break
+        except Exception as exc:
+            last_exc = exc
+            if any(k in str(exc) for k in ("429", "RESOURCE_EXHAUSTED", "quota", "404", "503")):
+                await asyncio.sleep(1.5)
+                continue
+            raise
+    if response is None and last_exc is not None:
+        raise last_exc
     return json.loads(response.text)
 
 
