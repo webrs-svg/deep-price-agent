@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0b0f19" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PriceScout" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
+  <title>24/7 Price &amp; Deal Scout</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --surface: #131a2a;
+      --surface-2: #1b253b;
+      --border: #26324d;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.2);
+      --green: #22c55e;
+      --green-bg: rgba(34, 197, 94, 0.14);
+      --amber: #f59e0b;
+      --amber-bg: rgba(245, 158, 11, 0.14);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.14);
+      --purple: #a855f7;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      padding: 16px 14px 90px;
+    }
+    .container { max-width: 1180px; margin: 0 auto; }
+
+    /* Top App Bar */
+    .app-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand img { width: 38px; height: 38px; border-radius: 10px; }
+    .brand h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; }
+    .brand .sub { font-size: 0.76rem; color: var(--muted); }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    }
+    .btn-green {
+      background: linear-gradient(135deg, #16a34a, #059669);
+      border-color: #22c55e;
+      color: #fff;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Launch & Research Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .card-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .card-title { font-size: 0.98rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .card-body { padding: 16px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 768px) {
+      .form-grid { grid-template-columns: 1fr 1fr; }
+      .form-grid .full-mobile { grid-column: 1 / -1; }
+    }
+    .field label {
+      display: block;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .input, .select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 9px;
+      font-size: 0.92rem;
+    }
+    .input:focus, .select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .action-row .btn { flex: 1; min-width: 180px; padding: 12px 16px; font-size: 0.92rem; }
+
+    /* Subagent Live Status Tracker */
+    .agent-progress {
+      display: none;
+      margin-top: 14px;
+      padding: 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    .agent-progress.active { display: block; }
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .agent-pill {
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .agent-pill.running { border-color: var(--accent); color: var(--accent); }
+    .agent-pill.done { border-color: var(--green); color: var(--green); }
+
+    /* Settings Drawer */
+    .settings-drawer {
+      display: none;
+      background: var(--surface-2);
+      border: 1px solid var(--accent);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .settings-drawer.open { display: block; }
+
+    /* KPI Row */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    @media (min-width: 768px) {
+      .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px 15px;
+    }
+    .kpi-label { font-size: 0.72rem; text-transform: uppercase; color: var(--muted); }
+    .kpi-value { font-size: 1.35rem; font-weight: 800; margin-top: 3px; }
+    .kpi-sub { font-size: 0.75rem; color: var(--accent); margin-top: 2px; }
+
+    /* Stack Toggles */
+    .toggles-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 14px; }
+    label.toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+    label.toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+    /* Tables & Mobile Cards */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 11px 13px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    th {
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(255,255,255,0.02);
+    }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .net-price { font-weight: 800; font-size: 0.98rem; color: var(--green); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+    .badge-green { background: var(--green-bg); color: var(--green); }
+    .badge-amber { background: var(--amber-bg); color: var(--amber); }
+    .badge-red { background: var(--red-bg); color: var(--red); }
+    a.btn-link { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+    .recipe-box {
+      padding: 14px 16px;
+      background: rgba(34, 197, 94, 0.08);
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .recipe-box ol { padding-left: 18px; margin-top: 6px; }
+    .recipe-box li { margin-bottom: 4px; }
+    .empty-state { text-align: center; padding: 32px 16px; color: var(--muted); font-size: 0.88rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top App Header -->
+    <div class="app-bar">
+      <div class="brand">
+        <img src="./icon.svg" alt="PriceScout Icon" />
+        <div>
+          <h1>24/7 Price &amp; Deal Scout</h1>
+          <div class="sub" id="last-updated-label">Multi-Agent Live Price &amp; Deal App</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="install-pwa-btn" class="btn btn-primary" style="display:none;">📲 Install App</button>
+        <button id="toggle-settings-btn" class="btn">⚙️ Cloud Setup</button>
+      </div>
+    </div>
+
+    <!-- Cloud & API Settings Drawer (Stored strictly in Phone LocalStorage) -->
+    <div id="settings-drawer" class="settings-drawer">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <strong>📱 Phone App &amp; 24/7 Cloud Connection Settings</strong>
+        <span style="font-size:0.75rem; color:var(--muted);">Saved privately on your device only</span>
+      </div>
+      <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+        <div class="field">
+          <label>Gemini API Key (For Instant Live Phone Runs)</label>
+          <input type="password" id="cfg-gemini-key" class="input" placeholder="AIzaSy..." />
+        </div>
+        <div class="field">
+          <label>GitHub Repo (`owner/repo` for 24/7 Cloud Watch)</label>
+          <input type="text" id="cfg-gh-repo" class="input" placeholder="username/deep-price-agent" />
+        </div>
+        <div class="field">
+          <label>GitHub Personal Access Token (Optional for Cloud Trigger)</label>
+          <input type="password" id="cfg-gh-token" class="input" placeholder="ghp_... or github_pat_..." />
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; gap:10px; justify-content:flex-end;">
+        <button id="clear-local-btn" class="btn">Clear Local Cache</button>
+        <button id="save-settings-btn" class="btn btn-green">💾 Save on This Device</button>
+      </div>
+    </div>
+
+    <!-- Launch New Product Research Card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🔍 Research a Product or Add to 24/7 Watchlist</div>
+        <span style="font-size:0.76rem; color:var(--muted);">Always uses 3 Parallel Subagents</span>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field full-mobile">
+            <label>Product / Flight / Hotel Name *</label>
+            <input type="text" id="inp-product" class="input" placeholder="e.g. Sony WH-1000XM5 Black or RTX 5080" />
+          </div>
+          <div class="field full-mobile">
+            <label>Exact SKU / Variant / Notes</label>
+            <input type="text" id="inp-sku" class="input" placeholder="e.g. Brand New Sealed, 256GB" />
+          </div>
+          <div class="field">
+            <label>Region</label>
+            <select id="inp-region" class="select">
+              <option value="AU">AU (Australia)</option>
+              <option value="US">US (United States)</option>
+              <option value="UK">UK (United Kingdom)</option>
+              <option value="EU">EU (Europe)</option>
+              <option value="JP">JP (Japan)</option>
+              <option value="BR">BR (Brazil)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Currency</label>
+            <select id="inp-currency" class="select">
+              <option value="AUD">AUD ($)</option>
+              <option value="USD">USD ($)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="JPY">JPY (¥)</option>
+              <option value="BRL">BRL (R$)</option>
+            </select>
+          </div>
+          <div class="field full-mobile">
+            <label>Target Buy Price</label>
+            <input type="number" id="inp-target" class="input" placeholder="e.g. 399" step="any" />
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button id="run-live-btn" class="btn btn-primary">
+            ⚡ Run 3 Subagents Live Now (30s)
+          </button>
+          <button id="send-cloud-btn" class="btn btn-green">
+            ☁️ Send to 24/7 Cloud Watchlist (GitHub)
+          </button>
+        </div>
+
+        <!-- Live Subagent Status Indicator -->
+        <div id="agent-progress" class="agent-progress">
+          <div style="font-size:0.85rem; font-weight:600;" id="progress-headline">
+            Dispatching parallel subagents with Google Search Grounding...
+          </div>
+          <div class="agent-grid">
+            <div class="agent-pill" id="st-scout">
+              <span>1. <code>price-scout</code> (Live Retailers &amp; Stock)</span>
+              <strong id="st-scout-badge">Idle</strong>
+            </div>
+            <div class="agent-pill" id="st-deal">
+              <span>2. <code>deal-hunter</code> (Coupons &amp; Cashback)</span>
+              <strong id="st-deal-badge">Idle</strong>
+            </div>
+            <div class="agent-pill" id="st-trust">
+              <span>3. <code>trust-auditor</code> (History &amp; Fake Sales)</span>
+              <strong id="st-trust-badge">Idle</strong>
+            </div>
+            <div class="agent-pill" id="st-synth">
+              <span>4. Lead Net-Price Synthesizer</span>
+              <strong id="st-synth-badge">Idle</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="latest-recipe-box" class="recipe-box" style="display:none;"></div>
+    </div>
+
+    <!-- KPI Summary -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Watchlist Items</div>
+        <div class="kpi-value" id="kpi-watchlist-count">0</div>
+        <div class="kpi-sub">Cloud + Phone Synced</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Verified Offers</div>
+        <div class="kpi-value" id="kpi-offers-count">0</div>
+        <div class="kpi-sub">Live Grounded Prices</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Target Alerts Hit</div>
+        <div class="kpi-value" id="kpi-alerts-count">0</div>
+        <div class="kpi-sub">Net &le; Target Price</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Calculator Mode</div>
+        <div class="kpi-value" id="kpi-stack-mode">Full Stack</div>
+        <div class="kpi-sub">Interactive below</div>
+      </div>
+    </div>
+
+    <!-- Interactive Net Price Toggles -->
+    <div class="toggles-bar">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; flex:1;">
+        <input type="text" id="search-filter" class="input" style="max-width:220px;" placeholder="Filter store or item..." />
+        <select id="product-filter" class="select" style="max-width:220px;">
+          <option value="ALL">All Products</option>
+        </select>
+      </div>
+      <div class="toggle-group">
+        <label class="toggle"><input type="checkbox" id="toggle-shipping" checked /> +Shipping/Tax</label>
+        <label class="toggle"><input type="checkbox" id="toggle-promo" checked /> -Promo/Price-Beat</label>
+        <label class="toggle"><input type="checkbox" id="toggle-cashback" checked /> -Cashback/GC</label>
+      </div>
+    </div>
+
+    <!-- Active Watchlist Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📌 24/7 Watchlist &amp; Best Net Prices</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Region</th>
+              <th class="num">Target</th>
+              <th class="num">Best Net Price</th>
+              <th>Best Store</th>
+              <th>Verdict / Status</th>
+              <th>Checked</th>
+            </tr>
+          </thead>
+          <tbody id="watchlist-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live Retailer Offers Table -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🏆 Live Retailer Comparison (Ranked by True Net Landed Price)</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Retailer</th>
+              <th>Trust</th>
+              <th class="num">Sticker</th>
+              <th class="num">Ship/Tax</th>
+              <th class="num">Promo/Beat</th>
+              <th class="num">Cashback/GC</th>
+              <th class="num">True Net Price</th>
+              <th>Stock</th>
+              <th>Deal Stack &amp; Link</th>
+            </tr>
+          </thead>
+          <tbody id="offers-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- BEGIN_AGENT_DATA -->
+  <script>
+    window.PRICE_AGENT_DATA = {
+      "last_updated": "2026-10-28T18:06:00+11:00",
+      "watchlist": [],
+      "offers": []
+    };
+  </script>
+  <!-- END_AGENT_DATA -->
+
+  <script>
+    (function () {
+      // 1. Register PWA Service Worker & Install Prompt
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+      let deferredPrompt = null;
+      const installBtn = document.getElementById('install-pwa-btn');
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'inline-flex';
+      });
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+      });
+
+      // 2. Settings Management (Device-local storage)
+      const settingsDrawer = document.getElementById('settings-drawer');
+      const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
+      const cfgGeminiKey = document.getElementById('cfg-gemini-key');
+      const cfgGhRepo = document.getElementById('cfg-gh-repo');
+      const cfgGhToken = document.getElementById('cfg-gh-token');
+
+      cfgGeminiKey.value = localStorage.getItem('ps_gemini_key') || '';
+      cfgGhRepo.value = localStorage.getItem('ps_gh_repo') || 'webrs-svg/deep-price-agent';
+      cfgGhToken.value = localStorage.getItem('ps_gh_token') || '';
+
+      toggleSettingsBtn.addEventListener('click', () => {
+        settingsDrawer.classList.toggle('open');
+      });
+      document.getElementById('save-settings-btn').addEventListener('click', () => {
+        localStorage.setItem('ps_gemini_key', cfgGeminiKey.value.trim());
+        localStorage.setItem('ps_gh_repo', cfgGhRepo.value.trim());
+        localStorage.setItem('ps_gh_token', cfgGhToken.value.trim());
+        settingsDrawer.classList.remove('open');
+        alert('Settings saved privately on this device!');
+      });
+      document.getElementById('clear-local-btn').addEventListener('click', () => {
+        localStorage.removeItem('ps_local_watchlist');
+        localStorage.removeItem('ps_local_offers');
+        location.reload();
+      });
+
+      // 3. Merge Cloud Embedded Data + Device Local Runs
+      const baseData = window.PRICE_AGENT_DATA || { watchlist: [], offers: [] };
+      function getMergedData() {
+        const localWatch = JSON.parse(localStorage.getItem('ps_local_watchlist') || '[]');
+        const localOffers = JSON.parse(localStorage.getItem('ps_local_offers') || '[]');
+        const mapW = new Map();
+        (baseData.watchlist || []).forEach(w => mapW.set(w.name, w));
+        localWatch.forEach(w => mapW.set(w.name, w));
+        return {
+          last_updated: baseData.last_updated,
+          watchlist: Array.from(mapW.values()),
+          offers: [...localOffers, ...(baseData.offers || [])]
+        };
+      }
+
+      // 4. UI Elements
+      const searchInput = document.getElementById('search-filter');
+      const productSelect = document.getElementById('product-filter');
+      const toggleShipping = document.getElementById('toggle-shipping');
+      const togglePromo = document.getElementById('toggle-promo');
+      const toggleCashback = document.getElementById('toggle-cashback');
+      const watchlistTbody = document.getElementById('watchlist-tbody');
+      const offersTbody = document.getElementById('offers-tbody');
+
+      function fmt(amount, currency) {
+        if (amount === null || amount === undefined || isNaN(amount)) return '—';
+        return (currency || 'AUD') + ' ' + Number(amount).toFixed(2);
+      }
+
+      function computeDynamicPrice(offer) {
+        let price = Number(offer.base_price || 0);
+        if (toggleShipping.checked) price += Number(offer.shipping || 0);
+        if (togglePromo.checked) price -= Number(offer.promo_discount || 0);
+        if (toggleCashback.checked) price -= Number(offer.cashback_amount || 0);
+        return Math.max(0, price);
+      }
+
+      function render() {
+        const state = getMergedData();
+        const q = (searchInput.value || '').toLowerCase();
+        const selectedProd = productSelect.value;
+
+        // Refresh product dropdown options
+        const products = Array.from(new Set((state.offers || []).map(o => o.product_name).filter(Boolean)));
+        const currentVal = productSelect.value;
+        productSelect.innerHTML = '<option value="ALL">All Products</option>';
+        products.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p;
+          productSelect.appendChild(opt);
+        });
+        if (products.includes(currentVal)) productSelect.value = currentVal;
+
+        document.getElementById('kpi-watchlist-count').textContent = state.watchlist.length;
+        document.getElementById('kpi-offers-count').textContent = state.offers.length;
+        document.getElementById('kpi-alerts-count').textContent = state.watchlist.filter(
+          w => w.best_recorded_price && w.target_price && w.best_recorded_price <= w.target_price
+        ).length;
+
+        const flags = [
+          toggleShipping.checked ? '+Ship' : null,
+          togglePromo.checked ? '-Promo' : null,
+          toggleCashback.checked ? '-Cashback' : null
+        ].filter(Boolean);
+        document.getElementById('kpi-stack-mode').textContent =
+          flags.length === 3 ? 'Full Stack' : (flags.join(' ') || 'Sticker');
+
+        if (state.watchlist.length === 0) {
+          watchlistTbody.innerHTML = '<tr><td colspan="7" class="empty-state">No products tracked yet. Type a product above and tap <strong>⚡ Run 3 Subagents Live Now</strong> or <strong>☁️ Send to 24/7 Cloud Watchlist</strong>!</td></tr>';
+        } else {
+          watchlistTbody.innerHTML = state.watchlist.map(item => {
+            const hit = item.best_recorded_price && item.target_price && item.best_recorded_price <= item.target_price;
+            const badge = hit
+              ? '<span class="badge badge-green">🔥 TARGET HIT</span>'
+              : `<span class="badge badge-amber">${item.verdict || 'WATCHING'}</span>`;
+            return `<tr>
+              <td><strong>${item.name || ''}</strong><div style="font-size:0.74rem;color:var(--muted);">${item.sku || ''}</div></td>
+              <td>${item.region || 'AU'} (${item.currency || 'AUD'})</td>
+              <td class="num">${fmt(item.target_price, item.currency)}</td>
+              <td class="num net-price">${fmt(item.best_recorded_price, item.currency)}</td>
+              <td>${item.best_retailer || '—'}</td>
+              <td>${badge}</td>
+              <td style="font-size:0.76rem;color:var(--muted);">${item.last_checked || '—'}</td>
+            </tr>`;
+          }).join('');
+        }
+
+        const filteredOffers = (state.offers || [])
+          .filter(o => selectedProd === 'ALL' || o.product_name === selectedProd)
+          .filter(o => !q || (o.product_name || '').toLowerCase().includes(q) || (o.retailer || '').toLowerCase().includes(q) || (o.stack_notes || '').toLowerCase().includes(q))
+          .map(o => ({ ...o, dynamic_net: computeDynamicPrice(o) }))
+          .sort((a, b) => a.dynamic_net - b.dynamic_net);
+
+        if (filteredOffers.length === 0) {
+          offersTbody.innerHTML = '<tr><td colspan="10" class="empty-state">No live retailer offers yet. Run a search above!</td></tr>';
+        } else {
+          offersTbody.innerHTML = filteredOffers.map(o => {
+            const tClass = (o.trust_tier || '').toLowerCase().includes('grey') ? 'badge-red' : 'badge-green';
+            return `<tr>
+              <td><strong>${o.product_name || ''}</strong></td>
+              <td><strong>${o.retailer || ''}</strong></td>
+              <td><span class="badge ${tClass}">${o.trust_tier || 'Authorized'}</span></td>
+              <td class="num">${fmt(o.base_price, o.currency)}</td>
+              <td class="num">+${fmt(o.shipping || 0, o.currency)}</td>
+              <td class="num" style="color:var(--accent);">-${fmt(o.promo_discount || 0, o.currency)}</td>
+              <td class="num" style="color:var(--purple);">-${fmt(o.cashback_amount || 0, o.currency)}</td>
+              <td class="num net-price">${fmt(o.dynamic_net, o.currency)}</td>
+              <td>${o.in_stock !== false ? '<span class="badge badge-green">In Stock</span>' : '<span class="badge badge-red">Out</span>'}</td>
+              <td>
+                <div style="font-size:0.8rem;">${o.stack_notes || ''}</div>
+                ${o.url ? `<a class="btn-link" href="${o.url}" target="_blank" rel="noopener">Open Store &rarr;</a>` : ''}
+              </td>
+            </tr>`;
+          }).join('');
+        }
+      }
+
+      [searchInput, productSelect, toggleShipping, togglePromo, toggleCashback].forEach(el => {
+        el.addEventListener('input', render);
+        el.addEventListener('change', render);
+      });
+
+      // 5. Instant Live 3-Subagent Execution Directly from Phone Browser
+      async function callGeminiGrounded(apiKey, prompt, jsonMode = false) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const body = jsonMode
+          ? {
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: 'application/json', temperature: 0.1 }
+            }
+          : {
+              contents: [{ parts: [{ text: prompt }] }],
+              tools: [{ google_search: {} }],
+              generationConfig: { temperature: 0.2 }
+            };
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Gemini API Error (${res.status}): ${errText}`);
+        }
+        const data = await res.json();
+        const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+        return parts.map(p => p.text || '').join('\n');
+      }
+
+      function setPillState(id, badgeId, state, label) {
+        const el = document.getElementById(id);
+        const b = document.getElementById(badgeId);
+        el.className = 'agent-pill ' + (state || '');
+        b.textContent = label;
+      }
+
+      document.getElementById('run-live-btn').addEventListener('click', async () => {
+        const apiKey = localStorage.getItem('ps_gemini_key');
+        if (!apiKey) {
+          settingsDrawer.classList.add('open');
+          cfgGeminiKey.focus();
+          alert('Please paste your free Google AI Studio Gemini API Key once in ⚙️ Cloud Setup so your phone can run the 3 live subagents!');
+          return;
+        }
+        const product = document.getElementById('inp-product').value.trim();
+        if (!product) {
+          alert('Please enter a product name to research.');
+          return;
+        }
+        const sku = document.getElementById('inp-sku').value.trim() || product;
+        const region = document.getElementById('inp-region').value;
+        const currency = document.getElementById('inp-currency').value;
+        const targetPrice = parseFloat(document.getElementById('inp-target').value) || null;
+
+        const progressBox = document.getElementById('agent-progress');
+        const runBtn = document.getElementById('run-live-btn');
+        progressBox.classList.add('active');
+        runBtn.disabled = true;
+
+        setPillState('st-scout', 'st-scout-badge', 'running', 'Searching...');
+        setPillState('st-deal', 'st-deal-badge', 'running', 'Hunting...');
+        setPillState('st-trust', 'st-trust-badge', 'running', 'Auditing...');
+        setPillState('st-synth', 'st-synth-badge', '', 'Waiting');
+
+        try {
+          const scoutPrompt = `You are Subagent 1 (price-scout). Search live current in-stock prices in ${region} (${currency}) for "${product}" (${sku}). Check official stores, big-box retailers, specialist stores, and Amazon. Include exact product URLs, base price, shipping cost, and stock status. Never use outdated MSRP.`;
+          const dealPrompt = `You are Subagent 2 (deal-hunter). Search OzBargain, Slickdeals, Reddit, cashback portals (ShopBack, TopCashback, Rakuten), active promo codes, discounted gift cards, and retailer Price-Beat guarantees (e.g., Officeworks 5% beat, JB Hi-Fi price match, Best Buy) for "${product}" in ${region} (${currency}).`;
+          const trustPrompt = `You are Subagent 3 (trust-auditor). Audit the historical low price (CamelCamelCamel, PriceSpy, deal forums) for "${product}" in ${region} (${currency}), detect fake inflated MSRP discounts, and classify sellers into Authorized vs Grey Import.`;
+
+          const [scoutOut, dealOut, trustOut] = await Promise.all([
+            callGeminiGrounded(apiKey, scoutPrompt).then(r => { setPillState('st-scout', 'st-scout-badge', 'done', 'Done ✓'); return r; }),
+            callGeminiGrounded(apiKey, dealPrompt).then(r => { setPillState('st-deal', 'st-deal-badge', 'done', 'Done ✓'); return r; }),
+            callGeminiGrounded(apiKey, trustPrompt).then(r => { setPillState('st-trust', 'st-trust-badge', 'done', 'Done ✓'); return r; })
+          ]);
+
+          setPillState('st-synth', 'st-synth-badge', 'running', 'Synthesizing...');
+
+          const synthPrompt = `You are the Lead Orchestrator Agent following AGENTS.md. Synthesize these 3 subagent reports for "${product}" (${sku}) in ${region} (${currency}).
+Calculate True Net Landed Price = base_price + shipping - promo_discount - cashback_amount.
+Return ONLY valid JSON matching this exact structure:
+{
+  "verdict": "STRONG BUY | FAIR PRICE | WAIT FOR SALE",
+  "best_retailer": "Store Name",
+  "best_net_landed_price": 0.0,
+  "deal_stacking_recipe": ["Step 1...", "Step 2..."],
+  "offers": [
+    {
+      "retailer": "Store Name",
+      "trust_tier": "Authorized | Marketplace | Grey Import",
+      "base_price": 0.0,
+      "shipping": 0.0,
+      "promo_discount": 0.0,
+      "cashback_amount": 0.0,
+      "net_landed_price": 0.0,
+      "in_stock": true,
+      "url": "https://...",
+      "stack_notes": "Promo code / Price beat / Cashback details"
+    }
+  ]
+}
+
+--- PRICE SCOUT ---
+${scoutOut}
+--- DEAL HUNTER ---
+${dealOut}
+--- TRUST AUDITOR ---
+${trustOut}`;
+
+          const rawJson = await callGeminiGrounded(apiKey, synthPrompt, true);
+          const result = JSON.parse(rawJson);
+          setPillState('st-synth', 'st-synth-badge', 'done', 'Complete ✓');
+
+          const nowStr = new Date().toLocaleString();
+          const localWatch = JSON.parse(localStorage.getItem('ps_local_watchlist') || '[]');
+          const newWatch = {
+            name: product,
+            sku: sku,
+            region: region,
+            currency: currency,
+            target_price: targetPrice,
+            best_recorded_price: result.best_net_landed_price,
+            best_retailer: result.best_retailer,
+            verdict: result.verdict,
+            last_checked: nowStr
+          };
+          const filteredWatch = localWatch.filter(w => w.name !== product);
+          filteredWatch.unshift(newWatch);
+          localStorage.setItem('ps_local_watchlist', JSON.stringify(filteredWatch));
+
+          const localOffers = JSON.parse(localStorage.getItem('ps_local_offers') || '[]');
+          const newOffers = (result.offers || []).map(o => ({
+            ...o,
+            product_name: product,
+            currency: currency,
+            timestamp: nowStr
+          }));
+          localStorage.setItem('ps_local_offers', JSON.stringify([...newOffers, ...localOffers]));
+
+          if (result.deal_stacking_recipe && result.deal_stacking_recipe.length > 0) {
+            const rBox = document.getElementById('latest-recipe-box');
+            rBox.style.display = 'block';
+            rBox.innerHTML = `<strong>💡 Step-by-Step Deal Stacking Recipe for ${product} (${fmt(result.best_net_landed_price, currency)} at ${result.best_retailer}):</strong>
+              <ol>${result.deal_stacking_recipe.map(s => `<li>${s}</li>`).join('')}</ol>`;
+          }
+
+          render();
+        } catch (err) {
+          alert('Live Research Error: ' + err.message);
+        } finally {
+          runBtn.disabled = false;
+        }
+      });
+
+      // 6. Send to 24/7 Cloud Watchlist (Triggers GitHub Actions workflow_dispatch)
+      document.getElementById('send-cloud-btn').addEventListener('click', async () => {
+        const ghRepo = localStorage.getItem('ps_gh_repo') || 'webrs-svg/deep-price-agent';
+        const ghToken = localStorage.getItem('ps_gh_token');
+        const product = document.getElementById('inp-product').value.trim();
+        if (!product) {
+          alert('Please enter a product name first.');
+          return;
+        }
+        if (!ghRepo || !ghToken) {
+          settingsDrawer.classList.add('open');
+          alert('To trigger the 24/7 GitHub Cloud Runner directly from this button, enter your GitHub Repo (owner/repo) and a GitHub Token in ⚙️ Cloud Setup.');
+          return;
+        }
+        const sku = document.getElementById('inp-sku').value.trim();
+        const region = document.getElementById('inp-region').value;
+        const currency = document.getElementById('inp-currency').value;
+        const targetPrice = document.getElementById('inp-target').value.trim();
+
+        const btn = document.getElementById('send-cloud-btn');
+        btn.disabled = true;
+        btn.textContent = '☁️ Dispatching to Cloud...';
+        try {
+          const url = `https://api.github.com/repos/${ghRepo}/actions/workflows/price_watch.yml/dispatches`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': `Bearer ${ghToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              ref: 'main',
+              inputs: {
+                product_query: product,
+                sku: sku,
+                region: region,
+                currency: currency,
+                target_price: targetPrice
+              }
+            })
+          });
+          if (res.status === 204 || res.ok) {
+            alert(`✅ Sent "${product}" to your 24/7 Cloud Runner! GitHub Actions is now running the 3 subagents in the cloud and will monitor it every 6 hours.`);
+          } else {
+            const txt = await res.text();
+            throw new Error(`GitHub API returned ${res.status}: ${txt}`);
+          }
+        } catch (e) {
+          alert('Cloud Trigger Error: ' + e.message);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '☁️ Send to 24/7 Cloud Watchlist (GitHub)';
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

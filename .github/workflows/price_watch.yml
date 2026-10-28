@@ -1,0 +1,81 @@
+name: 24/7 Deep Price & Deal Watch
+
+on:
+  # Runs automatically every 6 hours in the cloud (even when your PC is turned off)
+  schedule:
+    - cron: "0 */6 * * *"
+
+  # Allows triggering an immediate deep research run from the GitHub Mobile App or browser
+  workflow_dispatch:
+    inputs:
+      product_query:
+        description: "Product name to research (leave blank to check all items in data/watchlist.json)"
+        required: false
+        default: ""
+      sku:
+        description: "Optional exact SKU / Model / Variant"
+        required: false
+        default: ""
+      region:
+        description: "Target region (AU, US, UK, EU, etc.)"
+        required: false
+        default: "AU"
+      currency:
+        description: "Target currency (AUD, USD, GBP, EUR, etc.)"
+        required: false
+        default: "AUD"
+      target_price:
+        description: "Optional target buy price for deal alerts"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  deep-price-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "cloud/requirements.txt"
+
+      - name: Install dependencies
+        run: pip install -r cloud/requirements.txt
+
+      - name: Run Multi-Agent Deep Price Orchestrator
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: |
+          if [ -n "${{ inputs.product_query }}" ]; then
+            python cloud/cloud_runner.py \
+              --product "${{ inputs.product_query }}" \
+              --sku "${{ inputs.sku }}" \
+              --region "${{ inputs.region }}" \
+              --currency "${{ inputs.currency }}" \
+              --target-price "${{ inputs.target_price }}"
+          else
+            python cloud/cloud_runner.py
+          fi
+
+      - name: Commit & Push Updated Reports, Watchlist, and HTML Dashboard
+        run: |
+          git config user.name "24/7 Price Research Agent"
+          git config user.email "actions@github.com"
+          git add data/ reports/ dashboards/
+          if git diff --staged --quiet; then
+            echo "No price changes to commit."
+          else
+            git commit -m "chore(prices): automated 24/7 multi-agent price & deal update [skip ci]"
+            git push
+          fi

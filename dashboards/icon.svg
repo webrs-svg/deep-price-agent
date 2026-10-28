@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="url(#accentGrad)" stroke-width="20" stroke-dasharray="60 24" opacity="0.35"/>
+  <path d="M144 316 L218 242 L274 286 L368 176" fill="none" stroke="url(#accentGrad)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <polygon points="368,176 312,176 368,232" fill="#22c55e"/>
+  <circle cx="144" cy="316" r="18" fill="#38bdf8"/>
+  <circle cx="218" cy="242" r="18" fill="#38bdf8"/>
+  <circle cx="274" cy="286" r="18" fill="#22c55e"/>
+  <text x="256" y="420" font-family="system-ui, sans-serif" font-size="60" font-weight="800" fill="#f8fafc" text-anchor="middle">24/7$</text>
+</svg>
