@@ -590,9 +590,14 @@
 
       <!-- Flight Results Table -->
       <div class="card">
-        <div class="card-header">
-          <div class="card-title">🏆 Discovered Flight Combinations (Ranked by True Net Fare)</div>
-          <span style="font-size:0.76rem; color:var(--muted);">Skyscanner • Google Flights • Kayak</span>
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div class="card-title">🏆 Discovered Flight Combinations (Ranked by True Net Fare)</div>
+            <span style="font-size:0.76rem; color:var(--muted);">Skyscanner • Google Flights • Kayak</span>
+          </div>
+          <button id="clear-flight-combos-btn" class="btn btn-sm" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:0.78rem; padding:4px 10px; cursor:pointer;" title="Clear discovered flight combinations">
+            🗑️ Clear Combinations
+          </button>
         </div>
         <div class="table-wrap">
           <table>
@@ -789,8 +794,11 @@
 
       <!-- Live Retailer Offers Table -->
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
           <div class="card-title">🏆 Live Retailer Comparison (Ranked by True Net Landed Price)</div>
+          <button id="clear-product-offers-btn" class="btn btn-sm" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:0.78rem; padding:4px 10px; cursor:pointer;" title="Clear discovered product offers">
+            🗑️ Clear Offers
+          </button>
         </div>
         <div class="table-wrap">
           <table>
@@ -933,6 +941,8 @@
         const localOffers = JSON.parse(localStorage.getItem('ps_local_offers') || '[]');
         const localFlightWatch = JSON.parse(localStorage.getItem('ps_local_flight_watchlist') || '[]');
         const localFlightOffers = JSON.parse(localStorage.getItem('ps_local_flight_offers') || '[]');
+        const hideBaseFlightOffers = localStorage.getItem('ps_hide_base_flight_offers') === 'true';
+        const hideBaseProductOffers = localStorage.getItem('ps_hide_base_product_offers') === 'true';
 
         const mapW = new Map();
         (baseData.watchlist || []).forEach(w => mapW.set(w.name, w));
@@ -942,12 +952,22 @@
         (baseData.flight_watchlist || []).forEach(f => mapFW.set(`${f.origin}-${f.destination}`, f));
         localFlightWatch.forEach(f => mapFW.set(`${f.origin}-${f.destination}`, f));
 
+        const flightOffers = [
+          ...localFlightOffers,
+          ...(hideBaseFlightOffers ? [] : (baseData.flight_offers || []))
+        ];
+
+        const productOffers = [
+          ...localOffers,
+          ...(hideBaseProductOffers ? [] : (baseData.offers || []))
+        ];
+
         return {
           last_updated: baseData.last_updated,
           watchlist: Array.from(mapW.values()),
-          offers: [...localOffers, ...(baseData.offers || [])],
+          offers: productOffers,
           flight_watchlist: Array.from(mapFW.values()),
-          flight_offers: [...localFlightOffers, ...(baseData.flight_offers || [])],
+          flight_offers: flightOffers,
         };
       }
 
@@ -1403,6 +1423,7 @@
                   <a class="btn btn-sm" href="${googUrl}" target="_blank" rel="noopener">Google Flights &rarr;</a>
                   <a class="btn btn-sm" href="${kayakUrl}" target="_blank" rel="noopener">Kayak &rarr;</a>
                   ${isHacker ? `<button class="btn btn-sm" style="background:#0284c7; color:#fff; cursor:pointer;" onclick="openHackerCart('${routeSummaryEncoded}', '${depDateParam}', '${retDateParam}', '${customLegsEncoded}', '${f.currency || 'AUD'}')">🛒 Book Legs (${legs.length || f.hops}) &rarr;</button>` : ''}
+                  <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#fca5a5; padding:4px 8px; cursor:pointer;" onclick="deleteFlightCombo('${routeSummaryEncoded}', '${depDateParam}')" title="Dismiss this combination">✕</button>
                 </div>
               </td>
             </tr>`;
@@ -1471,7 +1492,10 @@
               <td>${o.in_stock !== false ? '<span class="badge badge-green">In Stock</span>' : '<span class="badge badge-red">Out</span>'}</td>
               <td>
                 <div style="font-size:0.8rem;">${o.stack_notes || ''}</div>
-                ${o.url ? `<a class="btn-link" href="${o.url}" target="_blank" rel="noopener">Open Store &rarr;</a>` : ''}
+                <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+                  ${o.url ? `<a class="btn-link" href="${o.url}" target="_blank" rel="noopener">Open Store &rarr;</a>` : ''}
+                  <button class="btn btn-sm" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.25); color:#fca5a5; padding:2px 7px; cursor:pointer;" onclick="deleteProductOffer('${encodeURIComponent(o.product_name || '')}', '${encodeURIComponent(o.retailer || '')}')" title="Dismiss this offer">✕</button>
+                </div>
               </td>
             </tr>`;
           }).join('');
@@ -1488,6 +1512,101 @@
       [searchInput, productSelect, toggleShipping, togglePromo, toggleCashback].forEach(el => {
         el.addEventListener('input', render);
         el.addEventListener('change', render);
+      });
+
+      // Individual flight combination dismissal
+      window.deleteFlightCombo = function(routeSummaryEnc, depDate) {
+        const routeSummary = decodeURIComponent(routeSummaryEnc || '');
+        const localCombos = JSON.parse(localStorage.getItem('ps_local_flight_offers') || '[]');
+        const filtered = localCombos.filter(f => !(f.route_summary === routeSummary && (f.deal_depart_date === depDate || f.depart_date === depDate)));
+        localStorage.setItem('ps_local_flight_offers', JSON.stringify(filtered));
+
+        if (baseData.flight_offers) {
+          baseData.flight_offers = baseData.flight_offers.filter(f => !(f.route_summary === routeSummary && (f.deal_depart_date === depDate || f.depart_date === depDate)));
+        }
+        render();
+      };
+
+      // Clear Discovered Flight Combinations button
+      document.getElementById('clear-flight-combos-btn').addEventListener('click', () => {
+        const state = getMergedData();
+        if (!state.flight_offers || state.flight_offers.length === 0) {
+          alert('No discovered flight combinations to clear.');
+          return;
+        }
+        const selRoute = flRouteFilter.value;
+        const isFiltered = selRoute && selRoute !== 'ALL';
+        const msg = isFiltered
+          ? `Clear discovered combinations for "${selRoute}"?\n\n(Tip: Select "All Routes" from the filter to clear all routes at once)`
+          : 'Are you sure you want to clear all discovered flight combinations?';
+
+        if (!confirm(msg)) return;
+
+        if (isFiltered) {
+          const localCombos = JSON.parse(localStorage.getItem('ps_local_flight_offers') || '[]');
+          const remaining = localCombos.filter(f => `${f.origin} ➔ ${f.destination}` !== selRoute);
+          localStorage.setItem('ps_local_flight_offers', JSON.stringify(remaining));
+          if (baseData.flight_offers) {
+            baseData.flight_offers = baseData.flight_offers.filter(f => `${f.origin} ➔ ${f.destination}` !== selRoute);
+          }
+        } else {
+          localStorage.setItem('ps_local_flight_offers', '[]');
+          localStorage.setItem('ps_hide_base_flight_offers', 'true');
+          if (baseData.flight_offers) baseData.flight_offers = [];
+        }
+
+        const rBox = document.getElementById('flight-recipe-box');
+        if (rBox) rBox.style.display = 'none';
+
+        render();
+      });
+
+      // Individual product offer dismissal
+      window.deleteProductOffer = function(productNameEnc, retailerEnc) {
+        const pName = decodeURIComponent(productNameEnc || '');
+        const retName = decodeURIComponent(retailerEnc || '');
+        const localOffers = JSON.parse(localStorage.getItem('ps_local_offers') || '[]');
+        const filtered = localOffers.filter(o => !(o.product_name === pName && o.retailer === retName));
+        localStorage.setItem('ps_local_offers', JSON.stringify(filtered));
+
+        if (baseData.offers) {
+          baseData.offers = baseData.offers.filter(o => !(o.product_name === pName && o.retailer === retName));
+        }
+        render();
+      };
+
+      // Clear Live Product Offers button
+      document.getElementById('clear-product-offers-btn').addEventListener('click', () => {
+        const state = getMergedData();
+        if (!state.offers || state.offers.length === 0) {
+          alert('No live product offers to clear.');
+          return;
+        }
+        const selProd = productSelect.value;
+        const isFiltered = selProd && selProd !== 'ALL';
+        const msg = isFiltered
+          ? `Clear live offers for "${selProd}"?`
+          : 'Are you sure you want to clear all live product offers?';
+
+        if (!confirm(msg)) return;
+
+        if (isFiltered) {
+          const localOffers = JSON.parse(localStorage.getItem('ps_local_offers') || '[]');
+          const remaining = localOffers.filter(o => o.product_name !== selProd);
+          localStorage.setItem('ps_local_offers', JSON.stringify(remaining));
+          if (baseData.offers) {
+            baseData.offers = baseData.offers.filter(o => o.product_name !== selProd);
+          }
+        } else {
+          localStorage.setItem('ps_local_offers', '[]');
+          localStorage.setItem('ps_hide_base_product_offers', 'true');
+          if (baseData.offers) baseData.offers = [];
+        }
+
+        const pBox = document.getElementById('latest-recipe-box');
+        if (pBox) pBox.style.display = 'none';
+
+        render();
       });
 
       // 6. Gemini API Execution Functions (Free-Tier Fallback Chain)
@@ -1720,6 +1839,7 @@
         const runBtn = document.getElementById('run-flight-live-btn');
         progressBox.classList.add('active');
         runBtn.disabled = true;
+        localStorage.removeItem('ps_hide_base_flight_offers');
 
         setPillState('st-fl-mapper', 'st-fl-mapper-badge', 'running', 'Mapping...');
         setPillState('st-fl-a', 'st-fl-a-badge', '', 'Waiting');
@@ -2006,6 +2126,7 @@ ${corridorCOut}`;
         const runBtn = document.getElementById('run-live-btn');
         progressBox.classList.add('active');
         runBtn.disabled = true;
+        localStorage.removeItem('ps_hide_base_product_offers');
 
         setPillState('st-scout', 'st-scout-badge', 'running', 'Searching...');
         setPillState('st-deal', 'st-deal-badge', 'running', 'Hunting...');
