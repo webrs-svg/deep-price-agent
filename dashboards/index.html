@@ -230,6 +230,33 @@
     }
     .settings-drawer.open { display: block; }
 
+    /* Hacker Cart Modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open {
+      display: flex;
+    }
+    .modal-card {
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 20px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+    }
+
     /* KPI Row */
     .kpi-grid {
       display: grid;
@@ -376,6 +403,24 @@
       <div style="margin-top:12px; display:flex; gap:10px; justify-content:flex-end;">
         <button id="clear-local-btn" class="btn">Clear Local Cache</button>
         <button id="save-settings-btn" class="btn btn-green">💾 Save on This Device</button>
+      </div>
+    </div>
+
+    <!-- Hacker Cart Modal -->
+    <div id="hacker-modal" class="modal-backdrop">
+      <div class="modal-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+          <div>
+            <h3 id="hm-title" style="margin:0; font-size:1.15rem; color:#fff;">🛒 Self-Transfer Hacker Booking Cart</h3>
+            <div id="hm-subtitle" style="font-size:0.82rem; color:var(--primary); font-weight:600; margin-top:2px;"></div>
+          </div>
+          <button id="hm-close-btn" class="btn btn-sm" style="font-size:1rem; padding:4px 10px;">✕</button>
+        </div>
+        <div style="background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.3); border-radius:8px; padding:10px; font-size:0.8rem; color:var(--amber); margin-bottom:14px;">
+          ⚠️ <strong>Self-Transfer Requirement:</strong> Because hacker fares combine separate airline tickets, you must book each leg individually. Collect your luggage and re-check in between flights.
+        </div>
+        <div id="hm-quick-actions" style="margin-bottom:14px; display:flex; gap:8px; flex-wrap:wrap;"></div>
+        <div id="hm-legs-container" style="display:flex; flex-direction:column; gap:10px;"></div>
       </div>
     </div>
 
@@ -989,6 +1034,88 @@
         return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
       }
 
+      function extractRouteLegs(routeSummary, origin, dest, depDate) {
+        if (!routeSummary) return [];
+        const clean = routeSummary.replace(/\s*(?:➔|->|→|\bto\b)\s*/gi, '➔');
+        const rawStops = clean.split('➔').map(s => s.trim().toUpperCase()).filter(Boolean);
+        const stops = rawStops.map(s => {
+          const m = s.match(/\b([A-Z]{3})\b/);
+          return m ? m[1] : s.slice(0, 3);
+        });
+        if (stops.length < 2) return [];
+        const legs = [];
+        for (let i = 0; i < stops.length - 1; i++) {
+          const o = stops[i] || origin || 'SYD';
+          const d = stops[i + 1] || dest || 'SEA';
+          legs.push({
+            index: i + 1,
+            origin: o,
+            dest: d,
+            date: depDate,
+            skyscanner_url: buildSkyscannerUrl(o, d, depDate, ''),
+            google_flights_url: buildGoogleFlightsUrl(o, d, depDate, ''),
+            kayak_url: buildKayakUrl(o, d, depDate, '')
+          });
+        }
+        return legs;
+      }
+
+      window.openHackerCart = function(routeSummaryEncoded, depDate, customLegsJson = null) {
+        const routeSummary = decodeURIComponent(routeSummaryEncoded || '');
+        let legs = [];
+        if (customLegsJson && customLegsJson !== 'undefined' && customLegsJson !== 'null') {
+          try { legs = JSON.parse(decodeURIComponent(customLegsJson)); } catch (e) {}
+        }
+        if (!legs || legs.length === 0) {
+          legs = extractRouteLegs(routeSummary, '', '', depDate);
+        }
+        if (!legs || legs.length === 0) {
+          alert('This is a direct / single flight route. Use the Skyscanner, Google Flights, or Kayak buttons directly.');
+          return;
+        }
+
+        document.getElementById('hm-title').textContent = `🛒 Hacker Booking Cart (${legs.length} Separate Flights)`;
+        document.getElementById('hm-subtitle').textContent = routeSummary || '';
+
+        const qa = document.getElementById('hm-quick-actions');
+        qa.innerHTML = `
+          <button class="btn btn-sm btn-primary" id="open-all-sky-btn">⚡ Open All Legs in Skyscanner (${legs.length} Tabs)</button>
+          <button class="btn btn-sm" id="open-all-goog-btn">⚡ Open All Legs in Google Flights (${legs.length} Tabs)</button>
+        `;
+
+        document.getElementById('open-all-sky-btn').onclick = () => {
+          legs.forEach(l => window.open(l.skyscanner_url, '_blank'));
+        };
+        document.getElementById('open-all-goog-btn').onclick = () => {
+          legs.forEach(l => window.open(l.google_flights_url, '_blank'));
+        };
+
+        const container = document.getElementById('hm-legs-container');
+        container.innerHTML = legs.map((l, idx) => `
+          <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <strong style="color:#fff; font-size:0.95rem;">Ticket ${idx + 1}: ${l.origin} ➔ ${l.dest}</strong>
+              <span class="badge badge-purple">Leg #${idx + 1}</span>
+            </div>
+            <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">Travel Date: 🛫 ${l.date || depDate || 'Flexible'}</div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <a class="btn btn-sm btn-primary" href="${l.skyscanner_url}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
+              <a class="btn btn-sm" href="${l.google_flights_url}" target="_blank" rel="noopener">Google Flights &rarr;</a>
+              <a class="btn btn-sm" href="${l.kayak_url}" target="_blank" rel="noopener">Kayak &rarr;</a>
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('hacker-modal').classList.add('open');
+      };
+
+      document.getElementById('hm-close-btn').onclick = () => {
+        document.getElementById('hacker-modal').classList.remove('open');
+      };
+      document.getElementById('hacker-modal').onclick = (e) => {
+        if (e.target.id === 'hacker-modal') document.getElementById('hacker-modal').classList.remove('open');
+      };
+
       // 5. Render Functions
       const flOffersTbody = document.getElementById('flight-offers-tbody');
       const flWatchTbody = document.getElementById('flight-watchlist-tbody');
@@ -1108,17 +1235,10 @@
               ? f.kayak_url
               : buildKayakUrl(f.origin, f.destination, depDateParam, retDateParam);
 
-            let multicityUrl = f.multicity_url;
-            if (!multicityUrl && (f.hops > 1 || (f.route_summary && f.route_summary.includes('➔')))) {
-              const parts = (f.route_summary || '').split('➔').map(p => p.trim());
-              if (parts.length > 2) {
-                const legs = [];
-                for (let i = 0; i < parts.length - 1; i++) {
-                  legs.push({ origin: parts[i], dest: parts[i+1], date: depDateParam });
-                }
-                multicityUrl = buildMulticityGoogleFlightsUrl(legs);
-              }
-            }
+            const legs = extractRouteLegs(f.route_summary, f.origin, f.destination, depDateParam);
+            const isHacker = Number(f.hops) > 1 || legs.length > 1;
+            const customLegsEncoded = encodeURIComponent(JSON.stringify(f.hacker_cart_links || legs));
+            const routeSummaryEncoded = encodeURIComponent(f.route_summary || `${f.origin} ➔ ${f.destination}`);
 
             const verifiedBadge = f.is_live_verified
               ? '<span class="badge badge-green" style="margin-left:4px;">🟢 Live Verified</span>'
@@ -1150,7 +1270,7 @@
                   <a class="btn btn-sm btn-primary" href="${skyUrl}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
                   <a class="btn btn-sm" href="${googUrl}" target="_blank" rel="noopener">Google Flights &rarr;</a>
                   <a class="btn btn-sm" href="${kayakUrl}" target="_blank" rel="noopener">Kayak &rarr;</a>
-                  ${multicityUrl ? `<a class="btn btn-sm" style="background:#0284c7; color:#fff;" href="${multicityUrl}" target="_blank" rel="noopener">🛒 Hacker Cart (Multi-City) &rarr;</a>` : ''}
+                  ${isHacker ? `<button class="btn btn-sm" style="background:#0284c7; color:#fff; cursor:pointer;" onclick="openHackerCart('${routeSummaryEncoded}', '${depDateParam}', '${customLegsEncoded}')">🛒 Book Legs (${legs.length || f.hops}) &rarr;</button>` : ''}
                 </div>
               </td>
             </tr>`;
