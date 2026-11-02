@@ -150,29 +150,30 @@ def build_skyscanner_url(origin: str, dest: str, depart_date: str = "", return_d
     return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/{dep_yymmdd}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home"
 
 
-def build_google_flights_url(origin: str, dest: str, depart_date: str = "", return_date: str = "") -> str:
+def build_google_flights_url(origin: str, dest: str, depart_date: str = "", return_date: str = "", currency: str = "AUD") -> str:
     o = origin.strip().upper()
     d = dest.strip().upper()
     dep_iso, _, _ = normalize_flight_date(depart_date, "05")
-    if return_date:
+    curr = currency.strip().upper() if currency else "AUD"
+    if return_date and "one-way" not in return_date.lower() and return_date != "None":
         ret_iso, _, _ = normalize_flight_date(return_date, "26")
-        query = f"Flights from {o} to {d} departing {dep_iso} returning {ret_iso}"
+        query = f"flights to {d} from {o} on {dep_iso} through {ret_iso}"
     else:
-        query = f"Flights from {o} to {d} departing {dep_iso}"
-    return f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
+        query = f"flights to {d} from {o} on {dep_iso}"
+    return f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}&curr={curr}&hl=en"
 
 
 def build_kayak_url(origin: str, dest: str, depart_date: str = "", return_date: str = "") -> str:
     o = origin.strip().upper()
     d = dest.strip().upper()
     dep_iso, _, _ = normalize_flight_date(depart_date, "05")
-    if return_date:
+    if return_date and "one-way" not in return_date.lower() and return_date != "None":
         ret_iso, _, _ = normalize_flight_date(return_date, "26")
         return f"https://www.kayak.com.au/flights/{o}-{d}/{dep_iso}/{ret_iso}?sort=price_a"
     return f"https://www.kayak.com.au/flights/{o}-{d}/{dep_iso}?sort=price_a"
 
 
-def build_multicity_google_flights_url(legs: list[tuple[str, str, str]]) -> str:
+def build_multicity_google_flights_url(legs: list[tuple[str, str, str]], currency: str = "AUD") -> str:
     """
     Builds a unified multi-city Google Flights URL bundling all separate hacker legs:
     e.g. legs = [("SYD", "HNL", "2027-08-04"), ("HNL", "LAX", "2027-08-05"), ("LAX", "SEA", "2027-08-05")]
@@ -180,9 +181,57 @@ def build_multicity_google_flights_url(legs: list[tuple[str, str, str]]) -> str:
     parts = []
     for origin, dest, dep_date in legs:
         dep_iso, _, _ = normalize_flight_date(dep_date, "05")
-        parts.append(f"from {origin.strip().upper()} to {dest.strip().upper()} on {dep_iso}")
-    query = "Flights " + " then ".join(parts)
-    return f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
+        parts.append(f"to {dest.strip().upper()} from {origin.strip().upper()} on {dep_iso}")
+    query = "flights " + " then ".join(parts)
+    curr = currency.strip().upper() if currency else "AUD"
+    return f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}&curr={curr}&hl=en"
+
+
+def extract_route_legs_py(route_summary: str, origin: str, dest: str, dep_date: str, ret_date: str, currency: str = "AUD") -> list[dict[str, Any]]:
+    """Extracts all outbound and return flight legs from route summary string."""
+    legs: list[dict[str, Any]] = []
+    if "|" in route_summary:
+        sections = [s.strip() for s in route_summary.split("|")]
+        for sec_idx, sec in enumerate(sections):
+            is_return = any(k in sec.lower() for k in ("return", "inbound")) or sec_idx > 0
+            leg_date = ret_date if is_return else dep_date
+            clean = re.sub(r"^(?:outbound|inbound|return)\s*:\s*", "", sec, flags=re.IGNORECASE)
+            clean = re.sub(r"\s*(?:➔|->|→|\bto\b)\s*", "➔", clean)
+            raw_stops = [s.strip().upper() for s in clean.split("➔") if s.strip()]
+            stops = [re.search(r"\b([A-Z]{3})\b", s).group(1) if re.search(r"\b([A-Z]{3})\b", s) else s[:3] for s in raw_stops]
+            if len(stops) >= 2:
+                for i in range(len(stops) - 1):
+                    p_from = stops[i]
+                    p_to = stops[i + 1]
+                    legs.append({
+                        "direction": "Return" if is_return else "Outbound",
+                        "origin": p_from,
+                        "dest": p_to,
+                        "date": leg_date,
+                        "leg": f"{p_from} ➔ {p_to}",
+                        "google_flights_url": build_google_flights_url(p_from, p_to, leg_date, "", currency),
+                        "skyscanner_url": build_skyscanner_url(p_from, p_to, leg_date, ""),
+                        "kayak_url": build_kayak_url(p_from, p_to, leg_date, ""),
+                    })
+    if not legs:
+        clean = re.sub(r"\s*(?:➔|->|→|\bto\b)\s*", "➔", route_summary)
+        raw_stops = [s.strip().upper() for s in clean.split("➔") if s.strip()]
+        stops = [re.search(r"\b([A-Z]{3})\b", s).group(1) if re.search(r"\b([A-Z]{3})\b", s) else s[:3] for s in raw_stops]
+        if len(stops) >= 2:
+            for i in range(len(stops) - 1):
+                p_from = stops[i] or origin
+                p_to = stops[i + 1] or dest
+                legs.append({
+                    "direction": "Outbound",
+                    "origin": p_from,
+                    "dest": p_to,
+                    "date": dep_date,
+                    "leg": f"{p_from} ➔ {p_to}",
+                    "google_flights_url": build_google_flights_url(p_from, p_to, dep_date, "", currency),
+                    "skyscanner_url": build_skyscanner_url(p_from, p_to, dep_date, ""),
+                    "kayak_url": build_kayak_url(p_from, p_to, dep_date, ""),
+                })
+    return legs
 
 
 def fetch_live_google_flights(
@@ -827,27 +876,18 @@ async def process_flight_item(
         combo["deal_depart_date"] = deal_dep
         combo["deal_return_date"] = deal_ret
 
+        curr = route_info.get("currency", "AUD")
         combo["skyscanner_url"] = build_skyscanner_url(origin, dest, deal_dep, deal_ret)
-        combo["google_flights_url"] = build_google_flights_url(origin, dest, deal_dep, deal_ret)
+        combo["google_flights_url"] = build_google_flights_url(origin, dest, deal_dep, deal_ret, curr)
         combo["kayak_url"] = build_kayak_url(origin, dest, deal_dep, deal_ret)
 
         # Build 1-Click Multi-Leg Hacker Cart links
         r_sum = combo.get("route_summary", "")
-        parts = [p.strip() for p in r_sum.split("➔")] if "➔" in r_sum else [origin, dest]
-        if len(parts) > 2:
-            legs_tuples = []
-            hacker_links = []
-            for i in range(len(parts) - 1):
-                p_from = parts[i]
-                p_to = parts[i + 1]
-                legs_tuples.append((p_from, p_to, deal_dep))
-                hacker_links.append({
-                    "leg": f"{p_from} ➔ {p_to}",
-                    "google_flights_url": build_google_flights_url(p_from, p_to, deal_dep),
-                    "skyscanner_url": build_skyscanner_url(p_from, p_to, deal_dep),
-                })
-            combo["hacker_cart_links"] = hacker_links
-            combo["multicity_url"] = build_multicity_google_flights_url(legs_tuples)
+        extracted_legs = extract_route_legs_py(r_sum, origin, dest, deal_dep, deal_ret, curr)
+        if len(extracted_legs) > 1:
+            legs_tuples = [(l["origin"], l["dest"], l["date"]) for l in extracted_legs]
+            combo["hacker_cart_links"] = extracted_legs
+            combo["multicity_url"] = build_multicity_google_flights_url(legs_tuples, curr)
 
         # Flag if verified by live Google Flights engine
         if live_direct_flights and any(abs((f.get("price") or 0) - (combo.get("base_fare") or 0)) < 30 for f in live_direct_flights):

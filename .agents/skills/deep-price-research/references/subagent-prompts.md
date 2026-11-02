@@ -1,4 +1,4 @@
-# Subagent Prompt Templates (`subagent-prompts.md`)
+﻿# Subagent Prompt Templates (`subagent-prompts.md`)
 
 Use these exact prompt structures when invoking parallel subagents via `invoke_subagent` (in Antigravity) or via asynchronous Gemini API calls (in `cloud/cloud_runner.py`).
 
@@ -255,6 +255,6 @@ You are the **Layover Safety & Fare Rules Auditor (`hacker-stitcher-auditor`)**.
 6. **Generate 1-Click Search Engine URLs**:
    - Construct valid pre-populated search URLs using normalized dates:
      - **Skyscanner**: `https://www.skyscanner.com.au/transport/flights/{{ORIGIN_LOWER}}/{{DEST_LOWER}}/{{YYMMDD_DEP}}/{{YYMMDD_RET}}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home`
-     - **Google Flights**: `https://www.google.com/travel/flights?q=Flights%20from%20{{ORIGIN}}%20to%20{{DESTINATION}}%20departing%20{{YYYY-MM-DD_DEP}}%20returning%20{{YYYY-MM-DD_RET}}`
+     - **Google Flights**: `https://www.google.com/travel/flights?q=flights%20to%20{{DESTINATION}}%20from%20{{ORIGIN}}%20on%20{{YYYY-MM-DD_DEP}}%20through%20{{YYYY-MM-DD_RET}}&curr={{CURRENCY}}&hl=en`
      - **Kayak**: `https://www.kayak.com.au/flights/{{ORIGIN}}-{{DESTINATION}}/{{YYYY-MM-DD_DEP}}/{{YYYY-MM-DD_RET}}?sort=price_a`
 ```

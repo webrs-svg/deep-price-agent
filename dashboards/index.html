@@ -419,6 +419,7 @@
         <div style="background:rgba(234,179,8,0.12); border:1px solid rgba(234,179,8,0.3); border-radius:8px; padding:10px; font-size:0.8rem; color:var(--amber); margin-bottom:14px;">
           ⚠️ <strong>Self-Transfer Requirement:</strong> Because hacker fares combine separate airline tickets, you must book each leg individually. Collect your luggage and re-check in between flights.
         </div>
+        <div id="hm-popup-alert" style="display:none; margin-bottom:12px;"></div>
         <div id="hm-quick-actions" style="margin-bottom:14px; display:flex; gap:8px; flex-wrap:wrap;"></div>
         <div id="hm-legs-container" style="display:flex; flex-direction:column; gap:10px;"></div>
       </div>
@@ -1001,41 +1002,78 @@
         return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/${depNorm.yymmdd}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home`;
       }
 
-      function buildGoogleFlightsUrl(origin, dest, depDate, retDate) {
+      function buildGoogleFlightsUrl(origin, dest, depDate, retDate, currency = 'AUD') {
         const o = (origin || '').toUpperCase().trim();
         const d = (dest || '').toUpperCase().trim();
         const depNorm = normalizeFlightDate(depDate, '05');
-        let q = `Flights from ${o} to ${d} departing ${depNorm.iso}`;
-        if (retDate && !retDate.toLowerCase().includes('one-way')) {
+        const curr = (currency || 'AUD').toUpperCase().trim();
+        let q = `flights to ${d} from ${o} on ${depNorm.iso}`;
+        if (retDate && !retDate.toLowerCase().includes('one-way') && retDate !== '—' && retDate !== 'None') {
           const retNorm = normalizeFlightDate(retDate, '26');
-          q += ` returning ${retNorm.iso}`;
+          q += ` through ${retNorm.iso}`;
         }
-        return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
+        return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}&curr=${encodeURIComponent(curr)}&hl=en`;
       }
 
       function buildKayakUrl(origin, dest, depDate, retDate) {
         const o = (origin || '').toUpperCase().trim();
         const d = (dest || '').toUpperCase().trim();
         const depNorm = normalizeFlightDate(depDate, '05');
-        if (retDate && !retDate.toLowerCase().includes('one-way')) {
+        if (retDate && !retDate.toLowerCase().includes('one-way') && retDate !== '—' && retDate !== 'None') {
           const retNorm = normalizeFlightDate(retDate, '26');
           return `https://www.kayak.com.au/flights/${o}-${d}/${depNorm.iso}/${retNorm.iso}?sort=price_a`;
         }
         return `https://www.kayak.com.au/flights/${o}-${d}/${depNorm.iso}?sort=price_a`;
       }
 
-      function buildMulticityGoogleFlightsUrl(legs) {
+      function buildMulticityGoogleFlightsUrl(legs, currency = 'AUD') {
         if (!legs || legs.length === 0) return '';
         const parts = legs.map(l => {
           const norm = normalizeFlightDate(l.date, '05');
-          return `from ${l.origin.toUpperCase()} to ${l.dest.toUpperCase()} on ${norm.iso}`;
+          return `to ${l.dest.toUpperCase()} from ${l.origin.toUpperCase()} on ${norm.iso}`;
         });
-        const q = 'Flights ' + parts.join(' then ');
-        return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
+        const q = 'flights ' + parts.join(' then ');
+        const curr = (currency || 'AUD').toUpperCase().trim();
+        return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}&curr=${encodeURIComponent(curr)}&hl=en`;
       }
 
-      function extractRouteLegs(routeSummary, origin, dest, depDate) {
+      function extractRouteLegs(routeSummary, origin, dest, depDate, retDate, currency = 'AUD') {
         if (!routeSummary) return [];
+
+        // Support round-trip / multi-section string parsing (e.g. "Outbound: SYD ➔ HNL ➔ SEA | Return: SEA ➔ YVR ➔ SYD")
+        const isRoundTrip = /return|inbound|round-trip|⇄|\|/i.test(routeSummary);
+        if (isRoundTrip && routeSummary.includes('|')) {
+          const parts = routeSummary.split('|').map(p => p.trim());
+          const allLegs = [];
+          parts.forEach((part, partIdx) => {
+            const isRet = /return|inbound/i.test(part) || partIdx > 0;
+            const targetDate = isRet ? (retDate || depDate) : depDate;
+            const clean = part.replace(/^(?:outbound|inbound|return)\s*:\s*/i, '').replace(/\s*(?:➔|->|→|\bto\b)\s*/gi, '➔');
+            const rawStops = clean.split('➔').map(s => s.trim().toUpperCase()).filter(Boolean);
+            const stops = rawStops.map(s => {
+              const m = s.match(/\b([A-Z]{3})\b/);
+              return m ? m[1] : s.slice(0, 3);
+            });
+            if (stops.length >= 2) {
+              for (let i = 0; i < stops.length - 1; i++) {
+                const o = stops[i];
+                const d = stops[i + 1];
+                allLegs.push({
+                  direction: isRet ? 'Return' : 'Outbound',
+                  origin: o,
+                  dest: d,
+                  date: targetDate,
+                  skyscanner_url: buildSkyscannerUrl(o, d, targetDate, ''),
+                  google_flights_url: buildGoogleFlightsUrl(o, d, targetDate, '', currency),
+                  kayak_url: buildKayakUrl(o, d, targetDate, '')
+                });
+              }
+            }
+          });
+          if (allLegs.length > 0) return allLegs;
+        }
+
+        // Standard single-chain extraction
         const clean = routeSummary.replace(/\s*(?:➔|->|→|\bto\b)\s*/gi, '➔');
         const rawStops = clean.split('➔').map(s => s.trim().toUpperCase()).filter(Boolean);
         const stops = rawStops.map(s => {
@@ -1048,63 +1086,157 @@
           const o = stops[i] || origin || 'SYD';
           const d = stops[i + 1] || dest || 'SEA';
           legs.push({
-            index: i + 1,
+            direction: 'Outbound',
             origin: o,
             dest: d,
             date: depDate,
             skyscanner_url: buildSkyscannerUrl(o, d, depDate, ''),
-            google_flights_url: buildGoogleFlightsUrl(o, d, depDate, ''),
+            google_flights_url: buildGoogleFlightsUrl(o, d, depDate, '', currency),
             kayak_url: buildKayakUrl(o, d, depDate, '')
           });
         }
         return legs;
       }
 
-      window.openHackerCart = function(routeSummaryEncoded, depDate, customLegsJson = null) {
+      window.openHackerCart = function(routeSummaryEncoded, depDate, retDate, customLegsJson = null, currency = 'AUD') {
         const routeSummary = decodeURIComponent(routeSummaryEncoded || '');
-        let legs = [];
+        let rawLegs = [];
         if (customLegsJson && customLegsJson !== 'undefined' && customLegsJson !== 'null') {
-          try { legs = JSON.parse(decodeURIComponent(customLegsJson)); } catch (e) {}
+          try { rawLegs = JSON.parse(decodeURIComponent(customLegsJson)); } catch (e) {}
         }
-        if (!legs || legs.length === 0) {
-          legs = extractRouteLegs(routeSummary, '', '', depDate);
+        if (!rawLegs || rawLegs.length === 0) {
+          rawLegs = extractRouteLegs(routeSummary, '', '', depDate, retDate, currency);
         }
+        // Normalize each leg
+        const legs = rawLegs.map((l, idx) => {
+          const isRet = l.direction === 'Return' || (retDate && !l.direction && idx >= Math.floor(rawLegs.length / 2) && routeSummary.includes('|'));
+          const targetDate = l.date || (isRet ? retDate : depDate);
+          return {
+            index: idx + 1,
+            direction: isRet ? 'Return' : (l.direction || 'Outbound'),
+            origin: (l.origin || '').toUpperCase(),
+            dest: (l.dest || '').toUpperCase(),
+            date: targetDate,
+            skyscanner_url: l.skyscanner_url || buildSkyscannerUrl(l.origin, l.dest, targetDate, ''),
+            google_flights_url: l.google_flights_url || buildGoogleFlightsUrl(l.origin, l.dest, targetDate, '', currency),
+            kayak_url: l.kayak_url || buildKayakUrl(l.origin, l.dest, targetDate, '')
+          };
+        });
+
         if (!legs || legs.length === 0) {
           alert('This is a direct / single flight route. Use the Skyscanner, Google Flights, or Kayak buttons directly.');
           return;
         }
 
-        document.getElementById('hm-title').textContent = `🛒 Hacker Booking Cart (${legs.length} Separate Flights)`;
+        document.getElementById('hm-title').textContent = `🛒 Hacker Booking Cart (${legs.length} Separate Tickets)`;
         document.getElementById('hm-subtitle').textContent = routeSummary || '';
+
+        const alertBox = document.getElementById('hm-popup-alert');
+        if (alertBox) {
+          alertBox.style.display = 'none';
+          alertBox.innerHTML = '';
+        }
+
+        const multiCityUrl = buildMulticityGoogleFlightsUrl(legs, currency);
 
         const qa = document.getElementById('hm-quick-actions');
         qa.innerHTML = `
-          <button class="btn btn-sm btn-primary" id="open-all-sky-btn">⚡ Open All Legs in Skyscanner (${legs.length} Tabs)</button>
-          <button class="btn btn-sm" id="open-all-goog-btn">⚡ Open All Legs in Google Flights (${legs.length} Tabs)</button>
-        `;
-
-        document.getElementById('open-all-sky-btn').onclick = () => {
-          legs.forEach(l => window.open(l.skyscanner_url, '_blank'));
-        };
-        document.getElementById('open-all-goog-btn').onclick = () => {
-          legs.forEach(l => window.open(l.google_flights_url, '_blank'));
-        };
-
-        const container = document.getElementById('hm-legs-container');
-        container.innerHTML = legs.map((l, idx) => `
-          <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <strong style="color:#fff; font-size:0.95rem;">Ticket ${idx + 1}: ${l.origin} ➔ ${l.dest}</strong>
-              <span class="badge badge-purple">Leg #${idx + 1}</span>
+          <div style="display:flex; flex-direction:column; gap:8px; width:100%;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-sm btn-primary" id="open-all-sky-btn">⚡ Open All Skyscanner Tabs (${legs.length})</button>
+              <button class="btn btn-sm" id="open-all-goog-btn">⚡ Open All Google Flights Tabs (${legs.length})</button>
+              ${multiCityUrl ? `<a class="btn btn-sm" style="background:#047857; color:#fff;" href="${multiCityUrl}" target="_blank" rel="noopener">🌐 Google Flights Multi-City (1 Tab for All Legs) &rarr;</a>` : ''}
             </div>
-            <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">Travel Date: 🛫 ${l.date || depDate || 'Flexible'}</div>
-            <div style="display:flex; gap:6px; flex-wrap:wrap;">
-              <a class="btn btn-sm btn-primary" href="${l.skyscanner_url}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
-              <a class="btn btn-sm" href="${l.google_flights_url}" target="_blank" rel="noopener">Google Flights &rarr;</a>
-              <a class="btn btn-sm" href="${l.kayak_url}" target="_blank" rel="noopener">Kayak &rarr;</a>
+            <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+              <div style="font-size:0.82rem; color:var(--text);">
+                <strong style="color:var(--accent);">🚀 1-Click Ticket Stepper:</strong> Open each ticket one-by-one without popup blocker limits:
+              </div>
+              <button id="stepper-btn" class="btn btn-sm" style="background:var(--accent); color:#000; font-weight:700;">
+                Step 1: Open Ticket 1 (${legs[0].origin} ➔ ${legs[0].dest}) &rarr;
+              </button>
             </div>
           </div>
-        `).join('');
+        `;
+
+        // Sequential 1-Click ticket stepper (100% immune to popup blockers)
+        let currentStep = 0;
+        const stepperBtn = document.getElementById('stepper-btn');
+        stepperBtn.onclick = () => {
+          if (currentStep < legs.length) {
+            const leg = legs[currentStep];
+            window.open(leg.skyscanner_url, '_blank');
+            currentStep++;
+            if (currentStep < legs.length) {
+              const nextLeg = legs[currentStep];
+              stepperBtn.innerHTML = `Step ${currentStep + 1}: Open Ticket ${currentStep + 1} (${nextLeg.origin} ➔ ${nextLeg.dest}) &rarr;`;
+            } else {
+              stepperBtn.innerHTML = `✅ All ${legs.length} Tickets Opened!`;
+              stepperBtn.disabled = true;
+              stepperBtn.style.opacity = '0.7';
+            }
+          }
+        };
+
+        const handleOpenAll = (engineKey) => {
+          let blocked = 0;
+          let opened = 0;
+          legs.forEach((l) => {
+            const url = engineKey === 'google' ? l.google_flights_url : l.skyscanner_url;
+            try {
+              const win = window.open(url, '_blank');
+              if (!win || win.closed || typeof win.closed === 'undefined') {
+                blocked++;
+              } else {
+                opened++;
+              }
+            } catch (e) {
+              blocked++;
+            }
+          });
+
+          if (alertBox) {
+            alertBox.style.display = 'block';
+            if (blocked > 0) {
+              alertBox.innerHTML = `
+                <div style="background:#451a03; border:1px solid #d97706; color:#fed7aa; padding:10px 14px; border-radius:8px; font-size:0.83rem;">
+                  <strong>⚠️ Browser Popup Blocker Active:</strong> Opened ${opened} tab, but your browser blocked ${blocked} popups.
+                  <div style="margin-top:4px;">👉 Look at your browser address bar, tap the pop-up icon, and select <strong>"Always allow pop-ups from this site"</strong>.</div>
+                  <div style="margin-top:4px;">👉 Or use the <strong>🚀 1-Click Ticket Stepper</strong> above, or click each individual leg button below!</div>
+                </div>
+              `;
+            } else {
+              alertBox.innerHTML = `
+                <div style="background:#064e3b; border:1px solid #059669; color:#a7f3d0; padding:10px 14px; border-radius:8px; font-size:0.83rem;">
+                  ✅ Opened all ${opened} flight tabs! Check your browser tabs to complete booking.
+                </div>
+              `;
+            }
+          }
+        };
+
+        document.getElementById('open-all-sky-btn').onclick = () => handleOpenAll('skyscanner');
+        document.getElementById('open-all-goog-btn').onclick = () => handleOpenAll('google');
+
+        const container = document.getElementById('hm-legs-container');
+        container.innerHTML = legs.map((l, idx) => {
+          const isRet = l.direction === 'Return';
+          const badgeColor = isRet ? 'badge-amber' : 'badge-purple';
+          const icon = isRet ? '🛬 Return' : '🛫 Outbound';
+          return `
+            <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <strong style="color:#fff; font-size:0.95rem;">Ticket ${idx + 1}: ${l.origin} ➔ ${l.dest}</strong>
+                <span class="badge ${badgeColor}">${icon} (Leg #${idx + 1})</span>
+              </div>
+              <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">Travel Date: 🗓️ ${l.date || (isRet ? retDate : depDate) || 'Flexible'}</div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <a class="btn btn-sm btn-primary" href="${l.skyscanner_url}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
+                <a class="btn btn-sm" href="${l.google_flights_url}" target="_blank" rel="noopener">Google Flights &rarr;</a>
+                <a class="btn btn-sm" href="${l.kayak_url}" target="_blank" rel="noopener">Kayak &rarr;</a>
+              </div>
+            </div>
+          `;
+        }).join('');
 
         document.getElementById('hacker-modal').classList.add('open');
       };
@@ -1230,12 +1362,12 @@
               : buildSkyscannerUrl(f.origin, f.destination, depDateParam, retDateParam);
             const googUrl = (f.google_flights_url && f.google_flights_url.includes('travel/flights?q='))
               ? f.google_flights_url
-              : buildGoogleFlightsUrl(f.origin, f.destination, depDateParam, retDateParam);
+              : buildGoogleFlightsUrl(f.origin, f.destination, depDateParam, retDateParam, f.currency);
             const kayakUrl = (f.kayak_url && f.kayak_url.includes('kayak.com.au/flights/'))
               ? f.kayak_url
               : buildKayakUrl(f.origin, f.destination, depDateParam, retDateParam);
 
-            const legs = extractRouteLegs(f.route_summary, f.origin, f.destination, depDateParam);
+            const legs = extractRouteLegs(f.route_summary, f.origin, f.destination, depDateParam, retDateParam, f.currency);
             const isHacker = Number(f.hops) > 1 || legs.length > 1;
             const customLegsEncoded = encodeURIComponent(JSON.stringify(f.hacker_cart_links || legs));
             const routeSummaryEncoded = encodeURIComponent(f.route_summary || `${f.origin} ➔ ${f.destination}`);
@@ -1270,7 +1402,7 @@
                   <a class="btn btn-sm btn-primary" href="${skyUrl}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
                   <a class="btn btn-sm" href="${googUrl}" target="_blank" rel="noopener">Google Flights &rarr;</a>
                   <a class="btn btn-sm" href="${kayakUrl}" target="_blank" rel="noopener">Kayak &rarr;</a>
-                  ${isHacker ? `<button class="btn btn-sm" style="background:#0284c7; color:#fff; cursor:pointer;" onclick="openHackerCart('${routeSummaryEncoded}', '${depDateParam}', '${customLegsEncoded}')">🛒 Book Legs (${legs.length || f.hops}) &rarr;</button>` : ''}
+                  ${isHacker ? `<button class="btn btn-sm" style="background:#0284c7; color:#fff; cursor:pointer;" onclick="openHackerCart('${routeSummaryEncoded}', '${depDateParam}', '${retDateParam}', '${customLegsEncoded}', '${f.currency || 'AUD'}')">🛒 Book Legs (${legs.length || f.hops}) &rarr;</button>` : ''}
                 </div>
               </td>
             </tr>`;
@@ -1596,8 +1728,17 @@
         setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', '', 'Waiting');
 
         try {
+          const isReturn = tripType === 'return';
+
           // Step 1: Run Departure Hub Mapper first to discover real routes from departure airport
-          const mapperPrompt = `You are Subagent F1 (departure-hub-mapper). Identify all direct outbound flights from ${origin} and map viable transit hubs toward ${dest} for travel in ${departDate}. Partition the globe into 3 corridors: Corridor A (Direct & Major Alliance), Corridor B (Continental Mega-Hubs), Corridor C (Low-Cost Carriers & 2/3/4 Hops via secondary hubs).`;
+          const mapperPrompt = `You are Subagent F1 (departure-hub-mapper).
+Target Route: ${origin} to ${dest}.
+Trip Type: ${isReturn ? `RETURN / ROUND-TRIP (Outbound: around ${departDate}, Inbound Return: around ${returnDate})` : `ONE-WAY (around ${departDate})`}.
+Identify direct flights and map viable transit hubs connecting ${origin} and ${dest} in ${isReturn ? 'BOTH outbound and return directions' : 'outbound direction'}.
+Partition the globe into 3 corridors:
+- Corridor A (Direct & Major Alliance)
+- Corridor B (Continental Mega-Hubs e.g. Tokyo, Seoul, Singapore, Dubai, Doha, London, LAX)
+- Corridor C (Low-Cost Carriers & 2/3/4 Hops via secondary hubs e.g. Jetstar, Zipair, Scoot, AirAsia, Southwest, Volaris).`;
           const mapperOut = await callGeminiGrounded(apiKey, mapperPrompt);
           setPillState('st-fl-mapper', 'st-fl-mapper-badge', 'done', 'Mapped ✓');
 
@@ -1606,9 +1747,26 @@
           setPillState('st-fl-b', 'st-fl-b-badge', 'running', 'Searching...');
           setPillState('st-fl-c', 'st-fl-c-badge', 'running', 'Hunting...');
 
-          const corridorAPrompt = `You are Subagent F2 (corridor-a-scout). Search live direct flights and standard 1-stop single-ticket airline alliance routes between ${origin} and ${dest} around ${departDate}. Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.\n\n### Discovered Hubs from departure-hub-mapper:\n${mapperOut}`;
-          const corridorBPrompt = `You are Subagent F3 (corridor-b-scout). Search live 2- and 3-flight combinations between ${origin} and ${dest} through major continental mega-hubs (e.g. Tokyo Narita/Haneda, Seoul Incheon, Singapore, Dubai, Doha, London Heathrow, Los Angeles, etc.). Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.\n\n### Discovered Mega-Hubs from departure-hub-mapper:\n${mapperOut}`;
-          const corridorCPrompt = `You are Subagent F4 (corridor-c-scout). Explore low-cost carriers (Jetstar, Zipair, Scoot, AirAsia, Southwest, Volaris, Alaska, WestJet, Ryanair, Wizz, EasyJet) and test 2-, 3-, or 4-flight hacker chains between ${origin} and ${dest} around ${departDate} via intermediate hubs (e.g. Honolulu, Fiji, Mexico City, Santiago, Taipei, Southeast Asia).\n\n### Secondary Transit Hubs from departure-hub-mapper:\n${mapperOut}`;
+          const corridorAPrompt = `You are Subagent F2 (corridor-a-scout). Search live direct flights and standard 1-stop single-ticket airline alliance routes between ${origin} and ${dest}.
+Trip Type: ${isReturn ? `RETURN / ROUND-TRIP (Outbound: around ${departDate}, Return: around ${returnDate})` : `ONE-WAY (around ${departDate})`}.
+${isReturn ? `CRITICAL: Search for the FULL RETURN JOURNEY (Outbound + Return) and verify total return pricing in ${currency} on Skyscanner, Google Flights, and Kayak.` : `Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`}
+
+### Discovered Hubs from departure-hub-mapper:
+${mapperOut}`;
+
+          const corridorBPrompt = `You are Subagent F3 (corridor-b-scout). Search live 2- and 3-flight combinations between ${origin} and ${dest} through major continental mega-hubs (e.g. Tokyo Narita/Haneda, Seoul Incheon, Singapore, Dubai, Doha, London Heathrow, Los Angeles, etc.).
+Trip Type: ${isReturn ? `RETURN / ROUND-TRIP (Outbound: around ${departDate}, Return: around ${returnDate})` : `ONE-WAY (around ${departDate})`}.
+${isReturn ? `CRITICAL: Explore routes for BOTH the outbound journey (${origin} ➔ ${dest}) and the inbound return journey (${dest} ➔ ${origin}). Verify total round-trip pricing in ${currency}.` : `Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`}
+
+### Discovered Mega-Hubs from departure-hub-mapper:
+${mapperOut}`;
+
+          const corridorCPrompt = `You are Subagent F4 (corridor-c-scout). Explore low-cost carriers (Jetstar, Zipair, Scoot, AirAsia, Southwest, Volaris, Alaska, WestJet, Ryanair, Wizz, EasyJet) and test 2-, 3-, or 4-flight hacker chains between ${origin} and ${dest}.
+Trip Type: ${isReturn ? `RETURN / ROUND-TRIP (Outbound: around ${departDate}, Return: around ${returnDate})` : `ONE-WAY (around ${departDate})`}.
+${isReturn ? `CRITICAL: Map multi-hop chains for BOTH Outbound (${departDate}) and Inbound Return (${returnDate}). Sum up ticket costs for the COMPLETE RETURN TRIP in ${currency}.` : `Calculate the sum of individual tickets in ${currency}.`}
+
+### Secondary Transit Hubs from departure-hub-mapper:
+${mapperOut}`;
 
           const [corridorAOut, corridorBOut, corridorCOut] = await Promise.all([
             callGeminiGrounded(apiKey, corridorAPrompt).then(r => { setPillState('st-fl-a', 'st-fl-a-badge', 'done', 'Done ✓'); return r; }),
@@ -1619,26 +1777,42 @@
           setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', 'running', 'Auditing 3h Layovers...');
 
           const stitchPrompt = `You are Subagent F5 (hacker-stitcher-auditor) and Lead Flight Route Synthesizer following AGENTS.md.
-Synthesize findings for ${origin} ➔ ${dest} in ${departDate} (${tripType}, ${cabin}, Currency: ${currency}, Luggage: ${checkedBag ? '1 Checked Bag Included' : 'Carry-on Only'}).
-Enforce a 3-hour minimum safety layover buffer on all self-transfers.
-Audit baggage policies, credit card surcharges, and transit visa requirements.
+Trip Type: ${isReturn ? 'RETURN / ROUND-TRIP' : 'ONE-WAY'}.
+Origin: ${origin}, Destination: ${dest}.
+Outbound Departure: around ${departDate}.
+${isReturn ? `Inbound Return: around ${returnDate}.` : ''}
+Cabin: ${cabin}, Currency: ${currency}, Luggage: ${checkedBag ? '1 Checked Bag Included' : 'Carry-on Only'}.
+
+CRITICAL MANDATES:
+${isReturn ? `
+1. ROUND-TRIP PRICING: All fares (base_fare, net_fare, skyscanner_price, google_flights_price, kayak_price) MUST BE FOR THE ENTIRE ROUND-TRIP / RETURN JOURNEY, NOT one-way!
+2. ROUTE SUMMARY: For return trips, route_summary MUST clearly describe both outbound and return paths, e.g.:
+   "Outbound: ${origin} ➔ HNL ➔ ${dest} (${departDate}) | Return: ${dest} ➔ YVR ➔ ${origin} (${returnDate})"
+   (or for direct: "${origin} ⇄ ${dest} Direct Round-Trip").
+3. HACKER CART LINKS (hacker_cart_links): Provide all individual flight legs for BOTH Outbound and Return! Each leg must have "direction" ("Outbound" or "Return"), "origin", "dest", and exact "date".
+` : `
+1. ONE-WAY PRICING: Calculate net fare from ${origin} to ${dest}.
+2. Provide individual flight legs in hacker_cart_links.
+`}
+4. Enforce 3.0h safety layover buffer on all self-transfers.
+5. Audit baggage policies, credit card surcharges, and transit visa requirements.
 Return ONLY valid JSON matching this exact structure:
 {
-  "best_route_summary": "${origin} ➔ HNL ➔ LAX ➔ ${dest}",
+  "best_route_summary": "${isReturn ? 'Outbound: ' + origin + ' ➔ ... ➔ ' + dest + ' | Return: ' + dest + ' ➔ ... ➔ ' + origin : origin + ' ➔ ... ➔ ' + dest}",
   "best_depart_date": "Exact depart date e.g. 2027-08-04",
-  "best_return_date": "Exact return date e.g. 2027-08-25 (or One-Way)",
+  "best_return_date": "${isReturn ? 'Exact return date e.g. 2027-08-25' : 'One-Way'}",
   "best_net_fare": 0.0,
   "best_engine": "Skyscanner",
   "verdict": "EXCELLENT DEAL | GOOD FARE | EXPENSIVE / WAIT",
   "deal_booking_guide": ["Step 1...", "Step 2..."],
   "combinations": [
     {
-      "route_summary": "${origin} ➔ ... ➔ ${dest}",
-      "deal_depart_date": "Exact depart date for this deal e.g. 2027-08-04",
-      "deal_return_date": "Exact return date for this deal e.g. 2027-08-25",
-      "hops": 1,
-      "airlines": "Airline Names",
-      "duration_hours": 24.5,
+      "route_summary": "${isReturn ? 'Outbound: ... | Return: ...' : origin + ' ➔ ... ➔ ' + dest}",
+      "deal_depart_date": "2027-08-04",
+      "deal_return_date": "${isReturn ? '2027-08-25' : 'One-Way'}",
+      "hops": 2,
+      "airlines": "Airlines",
+      "duration_hours": 32.0,
       "layovers_summary": "Hub (3.5h)",
       "safety_buffer_met": true,
       "ticket_type": "Single Ticket (Protected) | Self-Transfer (Hacker Fare)",
@@ -1652,6 +1826,11 @@ Return ONLY valid JSON matching this exact structure:
       "skyscanner_url": "https://...",
       "google_flights_url": "https://...",
       "kayak_url": "https://...",
+      "hacker_cart_links": [
+        { "direction": "Outbound", "origin": "${origin}", "dest": "HNL", "date": "2027-08-04" },
+        { "direction": "Outbound", "origin": "HNL", "dest": "${dest}", "date": "2027-08-05" },
+        ${isReturn ? `{ "direction": "Return", "origin": "${dest}", "dest": "${origin}", "date": "2027-08-25" }` : ''}
+      ],
       "visa_warnings": "Transit visa notes",
       "pos_arbitrage_note": "Currency notes"
     }
@@ -1699,6 +1878,14 @@ ${corridorCOut}`;
           const newOffers = (result.combinations || []).map(c => {
             const depD = c.deal_depart_date || departDate;
             const retD = c.deal_return_date || returnDate;
+            const rawHackerLinks = Array.isArray(c.hacker_cart_links) && c.hacker_cart_links.length > 0 ? c.hacker_cart_links : null;
+            const fullHackerCartLinks = rawHackerLinks ? rawHackerLinks.map(l => ({
+              ...l,
+              skyscanner_url: l.skyscanner_url || buildSkyscannerUrl(l.origin, l.dest, l.date || depD, ''),
+              google_flights_url: l.google_flights_url || buildGoogleFlightsUrl(l.origin, l.dest, l.date || depD, '', currency),
+              kayak_url: l.kayak_url || buildKayakUrl(l.origin, l.dest, l.date || depD, '')
+            })) : null;
+
             return {
               ...c,
               origin: origin,
@@ -1709,8 +1896,9 @@ ${corridorCOut}`;
               deal_return_date: retD,
               currency: currency,
               timestamp: nowStr,
+              hacker_cart_links: fullHackerCartLinks,
               skyscanner_url: (c.skyscanner_url && c.skyscanner_url.includes('adultsv2')) ? c.skyscanner_url : buildSkyscannerUrl(origin, dest, depD, retD),
-              google_flights_url: (c.google_flights_url && c.google_flights_url.includes('travel/flights?q=')) ? c.google_flights_url : buildGoogleFlightsUrl(origin, dest, depD, retD),
+              google_flights_url: (c.google_flights_url && c.google_flights_url.includes('travel/flights?q=')) ? c.google_flights_url : buildGoogleFlightsUrl(origin, dest, depD, retD, currency),
               kayak_url: (c.kayak_url && c.kayak_url.includes('kayak.com.au/flights/')) ? c.kayak_url : buildKayakUrl(origin, dest, depD, retD)
             };
           });
