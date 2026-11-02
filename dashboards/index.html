@@ -350,6 +350,7 @@
           <label>Primary AI Model</label>
           <select id="cfg-gemini-model" class="select">
             <option value="auto">Auto (Smart Free-Tier Cascade: 2.5-Flash ➔ 3.5-Lite ➔ 1.5-Flash)</option>
+            <option value="openrouter-free">OpenRouter Free (Llama 3.3 70B ➔ Qwen 2.5 72B ➔ Gemini Free)</option>
             <option value="gemini-2.5-flash">gemini-2.5-flash (Most Generous: 500 Free Grounded Searches/Day)</option>
             <option value="gemini-3.8-flash">gemini-3.8-flash (Latest Model)</option>
             <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (High-Speed Lite)</option>
@@ -1302,12 +1303,23 @@
       }
 
       async function callGeminiGrounded(apiKeysStr, prompt, jsonMode = false) {
-        // Parse keys (supports single key or comma-separated list of keys for auto-rotation)
-        const keys = (apiKeysStr || '').split(/[,;\n]/).map(k => k.trim()).filter(Boolean);
-        if (keys.length === 0) throw new Error('No API Key provided. Please paste your Gemini API key in ⚙️ Setup.');
-
         const backupKey = localStorage.getItem('ps_backup_key') || '';
         const pref = localStorage.getItem('ps_gemini_model') || 'auto';
+
+        // Parse keys (supports single key or comma-separated list of keys for auto-rotation)
+        const keys = (apiKeysStr || '').split(/[,;\n]/).map(k => k.trim()).filter(Boolean);
+
+        // If user explicitly selected OpenRouter or only has an OpenRouter key
+        if ((pref === 'openrouter-free' || keys.length === 0) && backupKey && backupKey.startsWith('sk-or-')) {
+          try {
+            return await callOpenRouterFree(backupKey, prompt, jsonMode);
+          } catch (orErr) {
+            if (keys.length === 0) throw orErr;
+            console.warn('[OpenRouter Primary Failed, falling back to Gemini]', orErr);
+          }
+        }
+
+        if (keys.length === 0) throw new Error('No API Key provided. Please paste your Gemini or OpenRouter key in ⚙️ Setup.');
 
         // Build attempt chain with free-tier priorities
         // Priority for grounding: gemini-2.5-flash (most generous: 500 searches/day on free tier)
@@ -1413,10 +1425,11 @@
       // 7. Live Flight Search Button Click
       document.getElementById('run-flight-live-btn').addEventListener('click', async () => {
         const apiKey = localStorage.getItem('ps_gemini_key');
-        if (!apiKey) {
+        const backupKey = localStorage.getItem('ps_backup_key');
+        if (!apiKey && !backupKey) {
           settingsDrawer.classList.add('open');
           cfgGeminiKey.focus();
-          alert('Please paste your Google AI Studio Gemini API Key once in ⚙️ Setup so your phone can run the subagents!');
+          alert('Please paste either a Gemini API Key or an OpenRouter Free Key in ⚙️ Setup so your app can run the subagents!');
           return;
         }
         const origin = document.getElementById('fl-origin').value.trim().toUpperCase();
@@ -1646,10 +1659,11 @@ ${corridorCOut}`;
       // 9. Product Search Live Button Click
       document.getElementById('run-live-btn').addEventListener('click', async () => {
         const apiKey = localStorage.getItem('ps_gemini_key');
-        if (!apiKey) {
+        const backupKey = localStorage.getItem('ps_backup_key');
+        if (!apiKey && !backupKey) {
           settingsDrawer.classList.add('open');
           cfgGeminiKey.focus();
-          alert('Please paste your Google AI Studio Gemini API Key in ⚙️ Setup.');
+          alert('Please paste either a Gemini API Key or an OpenRouter Free Key in ⚙️ Setup.');
           return;
         }
         const product = document.getElementById('inp-product').value.trim();
