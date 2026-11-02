@@ -1263,27 +1263,42 @@
       }
 
       async function callOpenRouterFree(apiKey, prompt, jsonMode = false) {
-        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': 'https://webrs-svg.github.io/deep-price-agent/',
-            'X-Title': 'Deep Price & Flight Agent'
-          },
-          body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-lite-001:free',
-            messages: [{ role: 'user', content: prompt }],
-            temperature: jsonMode ? 0.1 : 0.2,
-            ...(jsonMode ? { response_format: { type: 'json_object' } } : {})
-          })
-        });
-        if (!res.ok) {
-          const t = await res.text();
-          throw new Error(`OpenRouter Error (${res.status}): ${t}`);
+        const candidateModels = [
+          'meta-llama/llama-3.3-70b-instruct:free',
+          'qwen/qwen-2.5-72b-instruct:free',
+          'google/gemini-2.0-flash-lite-001:free',
+          'openrouter/free'
+        ];
+        let lastErr = null;
+        for (const m of candidateModels) {
+          try {
+            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+                'HTTP-Referer': 'https://webrs-svg.github.io/deep-price-agent/',
+                'X-Title': 'Deep Price & Flight Agent'
+              },
+              body: JSON.stringify({
+                model: m,
+                messages: [{ role: 'user', content: prompt }],
+                temperature: jsonMode ? 0.1 : 0.2,
+                ...(jsonMode ? { response_format: { type: 'json_object' } } : {})
+              })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              const txt = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+              if (txt) return txt;
+            } else {
+              lastErr = new Error(`OpenRouter (${res.status}) on ${m}: ${await res.text()}`);
+            }
+          } catch (e) {
+            lastErr = e;
+          }
         }
-        const data = await res.json();
-        return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+        throw lastErr || new Error('All OpenRouter free models failed');
       }
 
       async function callGeminiGrounded(apiKeysStr, prompt, jsonMode = false) {
