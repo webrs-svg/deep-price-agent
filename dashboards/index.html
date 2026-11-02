@@ -1304,22 +1304,30 @@
         runBtn.disabled = true;
 
         setPillState('st-fl-mapper', 'st-fl-mapper-badge', 'running', 'Mapping...');
-        setPillState('st-fl-a', 'st-fl-a-badge', 'running', 'Searching...');
-        setPillState('st-fl-b', 'st-fl-b-badge', 'running', 'Searching...');
-        setPillState('st-fl-c', 'st-fl-c-badge', 'running', 'Hunting...');
+        setPillState('st-fl-a', 'st-fl-a-badge', '', 'Waiting');
+        setPillState('st-fl-b', 'st-fl-b-badge', '', 'Waiting');
+        setPillState('st-fl-c', 'st-fl-c-badge', '', 'Waiting');
         setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', '', 'Waiting');
 
         try {
+          // Step 1: Run Departure Hub Mapper first to discover real routes from departure airport
           const mapperPrompt = `You are Subagent F1 (departure-hub-mapper). Identify all direct outbound flights from ${origin} and map viable transit hubs toward ${dest} for travel in ${departDate}. Partition the globe into 3 corridors: Corridor A (Direct & Major Alliance), Corridor B (Continental Mega-Hubs), Corridor C (Low-Cost Carriers & 2/3/4 Hops via secondary hubs).`;
-          const corridorAPrompt = `You are Subagent F2 (corridor-a-scout). Search live direct flights and standard 1-stop single-ticket airline alliance routes between ${origin} and ${dest} around ${departDate}. Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`;
-          const corridorBPrompt = `You are Subagent F3 (corridor-b-scout). Search live 2- and 3-flight combinations between ${origin} and ${dest} through major continental mega-hubs (e.g. Tokyo Narita/Haneda, Seoul Incheon, Singapore, Dubai, Doha, London Heathrow, Los Angeles, etc.). Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`;
-          const corridorCPrompt = `You are Subagent F4 (corridor-c-scout). Explore low-cost carriers (Jetstar, Zipair, Scoot, AirAsia, Southwest, Volaris, Alaska, WestJet, Ryanair, Wizz, EasyJet) and test 2-, 3-, or 4-flight hacker chains between ${origin} and ${dest} around ${departDate} via intermediate hubs (e.g. Honolulu, Fiji, Mexico City, Santiago, Taipei, Southeast Asia).`;
+          const mapperOut = await callGeminiGrounded(apiKey, mapperPrompt);
+          setPillState('st-fl-mapper', 'st-fl-mapper-badge', 'done', 'Mapped ✓');
 
-          const [mapperOut, corridorAOut, corridorBOut, corridorCOut] = await Promise.all([
-            callGeminiGrounded(apiKey, mapperPrompt).then(r => { setPillState('st-fl-mapper', 'st-fl-mapper-badge', 'done', 'Done ✓'); return r; }),
-            sleep(300).then(() => callGeminiGrounded(apiKey, corridorAPrompt)).then(r => { setPillState('st-fl-a', 'st-fl-a-badge', 'done', 'Done ✓'); return r; }),
-            sleep(600).then(() => callGeminiGrounded(apiKey, corridorBPrompt)).then(r => { setPillState('st-fl-b', 'st-fl-b-badge', 'done', 'Done ✓'); return r; }),
-            sleep(900).then(() => callGeminiGrounded(apiKey, corridorCPrompt)).then(r => { setPillState('st-fl-c', 'st-fl-c-badge', 'done', 'Done ✓'); return r; })
+          // Step 2: Feed mapped hubs into Corridor Scouts A, B, and C
+          setPillState('st-fl-a', 'st-fl-a-badge', 'running', 'Searching...');
+          setPillState('st-fl-b', 'st-fl-b-badge', 'running', 'Searching...');
+          setPillState('st-fl-c', 'st-fl-c-badge', 'running', 'Hunting...');
+
+          const corridorAPrompt = `You are Subagent F2 (corridor-a-scout). Search live direct flights and standard 1-stop single-ticket airline alliance routes between ${origin} and ${dest} around ${departDate}. Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.\n\n### Discovered Hubs from departure-hub-mapper:\n${mapperOut}`;
+          const corridorBPrompt = `You are Subagent F3 (corridor-b-scout). Search live 2- and 3-flight combinations between ${origin} and ${dest} through major continental mega-hubs (e.g. Tokyo Narita/Haneda, Seoul Incheon, Singapore, Dubai, Doha, London Heathrow, Los Angeles, etc.). Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.\n\n### Discovered Mega-Hubs from departure-hub-mapper:\n${mapperOut}`;
+          const corridorCPrompt = `You are Subagent F4 (corridor-c-scout). Explore low-cost carriers (Jetstar, Zipair, Scoot, AirAsia, Southwest, Volaris, Alaska, WestJet, Ryanair, Wizz, EasyJet) and test 2-, 3-, or 4-flight hacker chains between ${origin} and ${dest} around ${departDate} via intermediate hubs (e.g. Honolulu, Fiji, Mexico City, Santiago, Taipei, Southeast Asia).\n\n### Secondary Transit Hubs from departure-hub-mapper:\n${mapperOut}`;
+
+          const [corridorAOut, corridorBOut, corridorCOut] = await Promise.all([
+            callGeminiGrounded(apiKey, corridorAPrompt).then(r => { setPillState('st-fl-a', 'st-fl-a-badge', 'done', 'Done ✓'); return r; }),
+            sleep(400).then(() => callGeminiGrounded(apiKey, corridorBPrompt)).then(r => { setPillState('st-fl-b', 'st-fl-b-badge', 'done', 'Done ✓'); return r; }),
+            sleep(800).then(() => callGeminiGrounded(apiKey, corridorCPrompt)).then(r => { setPillState('st-fl-c', 'st-fl-c-badge', 'done', 'Done ✓'); return r; })
           ]);
 
           setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', 'running', 'Auditing 3h Layovers...');
