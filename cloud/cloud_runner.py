@@ -98,39 +98,78 @@ def render_prompt(template: str, replacements: dict[str, Any]) -> str:
     return out
 
 
-# Deep Link Generators for Flights
+# =====================================================================
+# ACCURATE FLIGHT DATE NORMALIZATION & DEEP SEARCH LINK GENERATORS
+# =====================================================================
+def normalize_flight_date(date_str: str, default_day: str = "05") -> tuple[str, str, str]:
+    """
+    Normalizes human/flexible dates into:
+    - iso_date: 'YYYY-MM-DD' (e.g. '2027-08-05')
+    - yymmdd: 'YYMMDD' (e.g. '270805' required by Skyscanner)
+    - readable: '05 Aug 2027'
+    """
+    if not date_str:
+        return "2027-08-05", "270805", "05 Aug 2027"
+    s = str(date_str).strip()
+    iso_match = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", s)
+    if iso_match:
+        yyyy = iso_match.group(1)
+        mm = iso_match.group(2).zfill(2)
+        dd = iso_match.group(3).zfill(2)
+        month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][int(mm) - 1]
+        return f"{yyyy}-{mm}-{dd}", f"{yyyy[2:]}{mm}{dd}", f"{dd} {month_abbr} {yyyy}"
+
+    months = {
+        "jan": "01", "feb": "02", "mar": "03", "apr": "04", "may": "05", "jun": "06",
+        "jul": "07", "aug": "08", "sep": "09", "oct": "10", "nov": "11", "dec": "12",
+        "january": "01", "february": "02", "march": "03", "april": "04", "june": "06",
+        "july": "07", "august": "08", "september": "09", "october": "10", "november": "11", "december": "12",
+    }
+    year_match = re.search(r"\b(202\d|203\d)\b", s)
+    yyyy = year_match.group(1) if year_match else "2027"
+
+    mm = "08"
+    for m_name, m_num in months.items():
+        if re.search(rf"\b{m_name}\b", s, re.IGNORECASE):
+            mm = m_num
+            break
+
+    day_match = re.search(r"\b([12]\d|3[01]|0?[1-9])\b", s.replace(yyyy, ""))
+    dd = day_match.group(1).zfill(2) if day_match else default_day
+    month_abbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][int(mm) - 1]
+    return f"{yyyy}-{mm}-{dd}", f"{yyyy[2:]}{mm}{dd}", f"{dd} {month_abbr} {yyyy}"
+
+
 def build_skyscanner_url(origin: str, dest: str, depart_date: str = "", return_date: str = "") -> str:
     o = origin.strip().lower()
     d = dest.strip().lower()
-    # If YYYY-MM-DD convert to YYMMDD, otherwise fallback to month
-    dep_str = re.sub(r"\D", "", depart_date)
-    ret_str = re.sub(r"\D", "", return_date)
-    dep_slug = dep_str[2:8] if len(dep_str) >= 8 else (dep_str if dep_str else "")
-    ret_slug = ret_str[2:8] if len(ret_str) >= 8 else (ret_str if ret_str else "")
-    if dep_slug and ret_slug:
-        return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/{dep_slug}/{ret_slug}/"
-    elif dep_slug:
-        return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/{dep_slug}/"
-    return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/"
+    dep_iso, dep_yymmdd, _ = normalize_flight_date(depart_date, "05")
+    if return_date:
+        ret_iso, ret_yymmdd, _ = normalize_flight_date(return_date, "26")
+        return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/{dep_yymmdd}/{ret_yymmdd}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home"
+    return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/{dep_yymmdd}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home"
 
 
 def build_google_flights_url(origin: str, dest: str, depart_date: str = "", return_date: str = "") -> str:
-    query = f"Flights to {dest.upper()} from {origin.upper()}"
-    if depart_date:
-        query += f" on {depart_date}"
+    o = origin.strip().upper()
+    d = dest.strip().upper()
+    dep_iso, _, _ = normalize_flight_date(depart_date, "05")
     if return_date:
-        query += f" returning {return_date}"
+        ret_iso, _, _ = normalize_flight_date(return_date, "26")
+        query = f"Flights from {o} to {d} departing {dep_iso} returning {ret_iso}"
+    else:
+        query = f"Flights from {o} to {d} departing {dep_iso}"
     return f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
 
 
 def build_kayak_url(origin: str, dest: str, depart_date: str = "", return_date: str = "") -> str:
     o = origin.strip().upper()
     d = dest.strip().upper()
-    if depart_date and return_date:
-        return f"https://www.kayak.com.au/flights/{o}-{d}/{depart_date}/{return_date}"
-    elif depart_date:
-        return f"https://www.kayak.com.au/flights/{o}-{d}/{depart_date}"
-    return f"https://www.kayak.com.au/flights/{o}-{d}"
+    dep_iso, _, _ = normalize_flight_date(depart_date, "05")
+    if return_date:
+        ret_iso, _, _ = normalize_flight_date(return_date, "26")
+        return f"https://www.kayak.com.au/flights/{o}-{d}/{dep_iso}/{ret_iso}?sort=price_a"
+    return f"https://www.kayak.com.au/flights/{o}-{d}/{dep_iso}?sort=price_a"
 
 
 async def run_grounded_subagent(
@@ -143,11 +182,6 @@ async def run_grounded_subagent(
     from google.genai import types
 
     print(f"  [Subagent Start] -> {role_name}")
-    # Fallback chain for quotas:
-    # 1. Preferred model (gemini-3.8-flash) with Google Search grounding
-    # 2. gemini-2.5-flash with Google Search grounding (500 RPD free on unpaid Free Tier)
-    # 3. gemini-3.5-flash-lite with Google Search grounding
-    # 4. gemini-3.8-flash / gemini-3.5-flash-lite standard inference
     attempts = [
         (DEFAULT_MODEL, True),
         ("gemini-2.5-flash", True),
@@ -187,7 +221,6 @@ async def run_grounded_subagent(
         raise last_exc
 
     text = response.text or ""
-    # Extract grounding URLs if available in metadata
     urls: list[str] = []
     try:
         cand = response.candidates[0]
@@ -240,7 +273,7 @@ async def synthesize_net_landed_price(
         best_checkout_price: float
         best_net_landed_price: float
         historical_low_price: float | None = None
-        deal_stacking_recipe: list[str] = Field(description="Step-by-step instructions to achieve best_net_landed_price")
+        deal_stacking_recipe: list[str] = Field(description="Step-by-Step instructions to achieve best_net_landed_price")
         offers: list[RetailerOffer]
         markdown_report: str = Field(description="Complete detailed Markdown comparison report with tables and links")
 
@@ -292,7 +325,7 @@ Provide the structured JSON response including a rich, comprehensive `markdown_r
 
 
 # =====================================================================
-# FLIGHT MODE SYNTHESIS
+# FLIGHT MODE SYNTHESIS (INCLUDES DATES & DEEP LINKS)
 # =====================================================================
 async def synthesize_flight_routes(
     client: Any,
@@ -309,9 +342,11 @@ async def synthesize_flight_routes(
 
     class FlightCombination(BaseModel):
         route_summary: str = Field(description="Full routing e.g. SYD ➔ HNL ➔ LAX ➔ SEA")
+        deal_depart_date: str = Field(description="Exact depart date e.g. 2027-08-04 or 4 Aug 2027")
+        deal_return_date: str = Field(description="Exact return date e.g. 2027-08-25 or 25 Aug 2027 (or 'One-Way')")
         hops: int = Field(description="Number of flight legs: 1 (direct), 2, 3, or 4")
         airlines: str = Field(description="Airlines involved e.g. Jetstar + Southwest + Alaska")
-        duration_hours: float = Field(description="Total one-way or round-trip duration in hours")
+        duration_hours: float = Field(description="Total duration in hours")
         layovers_summary: str = Field(description="Key layover cities and hours e.g. HNL (3.5h), LAX (4.0h)")
         safety_buffer_met: bool = Field(description="True if all self-transfer layovers are >= 3.0 hours")
         ticket_type: str = Field(description="'Single Ticket (Protected)' or 'Self-Transfer (Hacker Fare)'")
@@ -325,11 +360,14 @@ async def synthesize_flight_routes(
         skyscanner_url: str = Field(description="Direct search link to Skyscanner")
         google_flights_url: str = Field(description="Direct search link to Google Flights")
         kayak_url: str = Field(description="Direct search link to Kayak")
+        direct_booking_url: str | None = Field(default=None, description="Direct airline link or booking link if available")
         visa_warnings: str = Field(description="Transit visa / ESTA / eTA requirements or None")
         pos_arbitrage_note: str = Field(description="Savings if booked in foreign currency or None")
 
     class FlightSynthesisResult(BaseModel):
         best_route_summary: str
+        best_depart_date: str = Field(description="Exact depart date for best deal")
+        best_return_date: str = Field(description="Exact return date for best deal")
         best_net_fare: float
         best_engine: str
         verdict: str = Field(description="EXCELLENT DEAL, GOOD FARE, or EXPENSIVE / WAIT")
@@ -349,7 +387,7 @@ async def synthesize_flight_routes(
 You are the Lead Flight Orchestrator following AGENTS.md.
 Synthesize the multi-agent flight research for:
 - Route: {origin} to {dest} ({route_info.get('trip_type', 'return')})
-- Dates: Depart: {dep}, Return: {ret}
+- Requested Travel Dates: Depart: {dep}, Return: {ret}
 - Cabin: {route_info.get('cabin_class', 'Economy')}
 - Luggage Mode: {bag}
 - Currency: {curr}
@@ -370,9 +408,10 @@ Synthesize the multi-agent flight research for:
 {stitcher_out}
 
 Mandatory Rules:
-1. Enforce 3.0h safety layover buffer on all self-transfers.
-2. Generate valid pre-populated Skyscanner, Google Flights, and Kayak URLs for every combination.
-3. Compare all options (direct, 2-hop, 3-hop, 4-hop) and rank by True Net Flight Fare.
+1. Provide exact `deal_depart_date` and `deal_return_date` (e.g. '2027-08-04' and '2027-08-25') for every combination found.
+2. Enforce 3.0h safety layover buffer on all self-transfers.
+3. Generate valid pre-populated Skyscanner, Google Flights, and Kayak URLs for every combination using exact deal dates.
+4. Compare all options (direct, 2-hop, 3-hop, 4-hop) and rank by True Net Flight Fare.
 Return ONLY structured JSON matching FlightSynthesisResult.
 """
 
@@ -413,7 +452,6 @@ def update_dashboard_html(
     flight_history_data: dict[str, Any],
     now_iso: str,
 ) -> None:
-    """Updates the embedded window.PRICE_AGENT_DATA block inside dashboards/index.html."""
     if not DASHBOARD_PATH.exists():
         return
     html = DASHBOARD_PATH.read_text(encoding="utf-8")
@@ -442,7 +480,6 @@ def update_dashboard_html(
 
 
 def update_reports_index(watchlist_items: list[dict[str, Any]]) -> None:
-    """Rebuilds reports/INDEX.md table from the latest watchlist state."""
     rows = []
     for w in watchlist_items:
         rep_link = f"[{w.get('latest_report', 'View')}](./{w.get('latest_report')})" if w.get("latest_report") else "—"
@@ -476,12 +513,12 @@ def update_reports_index(watchlist_items: list[dict[str, Any]]) -> None:
 
 
 def update_flight_reports_index(flight_routes: list[dict[str, Any]]) -> None:
-    """Rebuilds reports/flights-INDEX.md table from the latest flight watchlist."""
     rows = []
     for f in flight_routes:
         rep_link = f"[{f.get('latest_report', 'View')}](./flights/{f.get('latest_report')})" if f.get("latest_report") else "—"
+        date_display = f"{f.get('deal_depart_date', f.get('depart_date', '—'))} ➔ {f.get('deal_return_date', f.get('return_date', '—'))}"
         rows.append(
-            f"| **{f.get('origin')}** ➔ **{f.get('destination')}** | `{f.get('depart_date', '—')}` | `{f.get('trip_type', 'return')}` | "
+            f"| **{f.get('origin')}** ➔ **{f.get('destination')}** | `{date_display}` | `{f.get('trip_type', 'return')}` | "
             f"`{f.get('best_route_summary', '—')}` | {f.get('hops', '—')} | **{f.get('currency', 'AUD')} {f.get('best_net_fare', '—')}** | "
             f"{f.get('best_engine', 'Skyscanner')} | {'Yes' if f.get('checked_bag') else 'Carry-on'} | `{f.get('last_checked', '—')}` | {rep_link} |"
         )
@@ -494,7 +531,7 @@ def update_flight_reports_index(flight_routes: list[dict[str, Any]]) -> None:
 
 ## Active Monitored Flight Routes
 
-| Route | Dates | Trip Type | Best Route / Combination | Hops | Best Net Fare | Engine | Checked Bag | Last Checked | Report |
+| Route | Travel Dates Found | Trip Type | Best Route / Combination | Hops | Best Net Fare | Engine | Checked Bag | Last Checked | Report |
 | :--- | :---: | :---: | :--- | :---: | ---: | :---: | :---: | :---: | :---: |
 {table_body}
 
@@ -674,29 +711,32 @@ async def process_flight_item(
     report_path.write_text(synth["markdown_report"], encoding="utf-8")
 
     route_info["best_route_summary"] = synth["best_route_summary"]
+    route_info["best_depart_date"] = synth.get("best_depart_date", route_info.get("depart_date"))
+    route_info["best_return_date"] = synth.get("best_return_date", route_info.get("return_date"))
     route_info["best_net_fare"] = synth["best_net_fare"]
     route_info["best_engine"] = synth["best_engine"]
     route_info["verdict"] = synth["verdict"]
     route_info["last_checked"] = now_iso
     route_info["latest_report"] = report_filename
 
-    # Record historical flight combinations
+    # Record historical flight combinations with exact dates & deep links
     for combo in synth.get("combinations", []):
-        # Auto-ensure deep links are generated if model omitted
-        if not combo.get("skyscanner_url"):
-            combo["skyscanner_url"] = build_skyscanner_url(origin, dest, route_info.get("depart_date", ""), route_info.get("return_date", ""))
-        if not combo.get("google_flights_url"):
-            combo["google_flights_url"] = build_google_flights_url(origin, dest, route_info.get("depart_date", ""), route_info.get("return_date", ""))
-        if not combo.get("kayak_url"):
-            combo["kayak_url"] = build_kayak_url(origin, dest, route_info.get("depart_date", ""), route_info.get("return_date", ""))
+        deal_dep = combo.get("deal_depart_date") or route_info.get("depart_date", "")
+        deal_ret = combo.get("deal_return_date") or route_info.get("return_date", "")
+        combo["deal_depart_date"] = deal_dep
+        combo["deal_return_date"] = deal_ret
+
+        combo["skyscanner_url"] = build_skyscanner_url(origin, dest, deal_dep, deal_ret)
+        combo["google_flights_url"] = build_google_flights_url(origin, dest, deal_dep, deal_ret)
+        combo["kayak_url"] = build_kayak_url(origin, dest, deal_dep, deal_ret)
 
         flight_history_data.setdefault("records", []).append(
             {
                 "timestamp": now_iso,
                 "origin": origin,
                 "destination": dest,
-                "depart_date": route_info.get("depart_date"),
-                "return_date": route_info.get("return_date"),
+                "depart_date": deal_dep,
+                "return_date": deal_ret,
                 "currency": route_info.get("currency", "AUD"),
                 **combo,
             }
@@ -707,7 +747,7 @@ async def process_flight_item(
         alert_msg = (
             f"✈️ FLIGHT DEAL ALERT: {origin} ➔ {dest} hit {route_info.get('currency', 'AUD')} "
             f"{synth['best_net_fare']} ({synth['best_route_summary']}) on {synth['best_engine']} "
-            f"(Target: {target_fare})!"
+            f"(Dates: {route_info['best_depart_date']} to {route_info['best_return_date']})!"
         )
         print(alert_msg)
         send_webhook_alert(os.environ.get("ALERT_WEBHOOK_URL", ""), alert_msg)

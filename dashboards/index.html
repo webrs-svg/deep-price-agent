@@ -541,6 +541,7 @@
             <thead>
               <tr>
                 <th>Route Overview</th>
+                <th>Travel Dates</th>
                 <th>Hops</th>
                 <th>Airlines</th>
                 <th>Duration &amp; Layovers</th>
@@ -876,28 +877,73 @@
         return (currency || 'AUD') + ' ' + Number(amount).toFixed(2);
       }
 
-      // Deep search link generators
+      // Accurate flight date normalizer & deep search link generators
+      function normalizeFlightDate(dateStr, defaultDay = '05') {
+        if (!dateStr) return { iso: '2027-08-05', yymmdd: '270805', readable: '05 Aug 2027' };
+        const s = String(dateStr).trim();
+        const isoMatch = s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        if (isoMatch) {
+          const yyyy = isoMatch[1];
+          const mm = isoMatch[2].padStart(2, '0');
+          const dd = isoMatch[3].padStart(2, '0');
+          const readable = `${dd} ${monthNames[parseInt(mm, 10) - 1]} ${yyyy}`;
+          return { iso: `${yyyy}-${mm}-${dd}`, yymmdd: `${yyyy.slice(2)}${mm}${dd}`, readable };
+        }
+        const monthsMap = {
+          jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+          jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12',
+          january: '01', february: '02', march: '03', april: '04', june: '06',
+          july: '07', august: '08', september: '09', october: '10', november: '11', december: '12'
+        };
+        const yrMatch = s.match(/\b(202\d|203\d)\b/);
+        const yyyy = yrMatch ? yrMatch[1] : '2027';
+        let mm = '08';
+        for (const [mName, mNum] of Object.entries(monthsMap)) {
+          if (new RegExp(`\\b${mName}\\b`, 'i').test(s)) {
+            mm = mNum;
+            break;
+          }
+        }
+        const rem = s.replace(yyyy, '');
+        const dMatch = rem.match(/\b([12]\d|3[01]|0?[1-9])\b/);
+        const dd = dMatch ? dMatch[1].padStart(2, '0') : defaultDay;
+        const readable = `${dd} ${monthNames[parseInt(mm, 10) - 1]} ${yyyy}`;
+        return { iso: `${yyyy}-${mm}-${dd}`, yymmdd: `${yyyy.slice(2)}${mm}${dd}`, readable };
+      }
+
       function buildSkyscannerUrl(origin, dest, depDate, retDate) {
         const o = (origin || '').toLowerCase().trim();
         const d = (dest || '').toLowerCase().trim();
-        const dep = (depDate || '').replace(/\D/g, '').slice(2, 8);
-        const ret = (retDate || '').replace(/\D/g, '').slice(2, 8);
-        if (dep && ret) return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/${dep}/${ret}/`;
-        if (dep) return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/${dep}/`;
-        return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/`;
+        const depNorm = normalizeFlightDate(depDate, '05');
+        if (retDate && !retDate.toLowerCase().includes('one-way')) {
+          const retNorm = normalizeFlightDate(retDate, '26');
+          return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/${depNorm.yymmdd}/${retNorm.yymmdd}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home`;
+        }
+        return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/${depNorm.yymmdd}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home`;
       }
+
       function buildGoogleFlightsUrl(origin, dest, depDate, retDate) {
-        let q = `Flights to ${dest} from ${origin}`;
-        if (depDate) q += ` on ${depDate}`;
-        if (retDate) q += ` returning ${retDate}`;
+        const o = (origin || '').toUpperCase().trim();
+        const d = (dest || '').toUpperCase().trim();
+        const depNorm = normalizeFlightDate(depDate, '05');
+        let q = `Flights from ${o} to ${d} departing ${depNorm.iso}`;
+        if (retDate && !retDate.toLowerCase().includes('one-way')) {
+          const retNorm = normalizeFlightDate(retDate, '26');
+          q += ` returning ${retNorm.iso}`;
+        }
         return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
       }
+
       function buildKayakUrl(origin, dest, depDate, retDate) {
         const o = (origin || '').toUpperCase().trim();
         const d = (dest || '').toUpperCase().trim();
-        if (depDate && retDate) return `https://www.kayak.com.au/flights/${o}-${d}/${depDate}/${retDate}`;
-        if (depDate) return `https://www.kayak.com.au/flights/${o}-${d}/${depDate}`;
-        return `https://www.kayak.com.au/flights/${o}-${d}`;
+        const depNorm = normalizeFlightDate(depDate, '05');
+        if (retDate && !retDate.toLowerCase().includes('one-way')) {
+          const retNorm = normalizeFlightDate(retDate, '26');
+          return `https://www.kayak.com.au/flights/${o}-${d}/${depNorm.iso}/${retNorm.iso}?sort=price_a`;
+        }
+        return `https://www.kayak.com.au/flights/${o}-${d}/${depNorm.iso}?sort=price_a`;
       }
 
       // 5. Render Functions
@@ -963,9 +1009,12 @@
             const badge = hit
               ? '<span class="badge badge-green">🔥 TARGET HIT</span>'
               : `<span class="badge badge-amber">${f.verdict || 'WATCHING'}</span>`;
+            const dateDisplay = (f.best_depart_date && f.best_return_date)
+              ? `<div>${f.depart_date || 'Flexible'}</div><div style="font-size:0.72rem; color:var(--primary); font-weight:600; margin-top:2px;">Deal: ${f.best_depart_date} → ${f.best_return_date}</div>`
+              : (f.depart_date || '—');
             return `<tr>
               <td><strong>${f.origin} ➔ ${f.destination}</strong></td>
-              <td>${f.depart_date || '—'}</td>
+              <td>${dateDisplay}</td>
               <td>${f.trip_type || 'return'}</td>
               <td class="num">${fmt(f.target_price, f.currency)}</td>
               <td class="num net-price">${fmt(f.best_net_fare, f.currency)}</td>
@@ -989,7 +1038,7 @@
           .sort((a, b) => a.dynamic_fare - b.dynamic_fare);
 
         if (filteredFlights.length === 0) {
-          flOffersTbody.innerHTML = '<tr><td colspan="8" class="empty-state">No flight combinations found matching filters. Run a search above!</td></tr>';
+          flOffersTbody.innerHTML = '<tr><td colspan="9" class="empty-state">No flight combinations found matching filters. Run a search above!</td></tr>';
         } else {
           flOffersTbody.innerHTML = filteredFlights.map(f => {
             const isSingle = (f.ticket_type || '').toLowerCase().includes('single');
@@ -1001,14 +1050,29 @@
               ? '<span class="badge badge-green" style="margin-left:4px;">&ge; 3.0h Safe</span>'
               : '<span class="badge badge-red" style="margin-left:4px;">Tight Layover!</span>';
 
-            const skyUrl = f.skyscanner_url || buildSkyscannerUrl(f.origin, f.destination, f.depart_date, f.return_date);
-            const googUrl = f.google_flights_url || buildGoogleFlightsUrl(f.origin, f.destination, f.depart_date, f.return_date);
-            const kayakUrl = f.kayak_url || buildKayakUrl(f.origin, f.destination, f.depart_date, f.return_date);
+            const depDateParam = f.deal_depart_date || f.depart_date;
+            const retDateParam = f.deal_return_date || f.return_date;
+            const depStr = f.deal_depart_date || f.depart_date || 'Flexible';
+            const retStr = f.deal_return_date || f.return_date || 'One-Way';
+
+            const skyUrl = (f.skyscanner_url && f.skyscanner_url.includes('adultsv2'))
+              ? f.skyscanner_url
+              : buildSkyscannerUrl(f.origin, f.destination, depDateParam, retDateParam);
+            const googUrl = (f.google_flights_url && f.google_flights_url.includes('travel/flights?q='))
+              ? f.google_flights_url
+              : buildGoogleFlightsUrl(f.origin, f.destination, depDateParam, retDateParam);
+            const kayakUrl = (f.kayak_url && f.kayak_url.includes('kayak.com.au/flights/'))
+              ? f.kayak_url
+              : buildKayakUrl(f.origin, f.destination, depDateParam, retDateParam);
 
             return `<tr>
               <td>
                 <strong style="color:var(--text); font-size:0.92rem;">${f.route_summary || `${f.origin} ➔ ${f.destination}`}</strong>
                 ${f.visa_warnings ? `<div style="font-size:0.75rem; color:var(--amber); margin-top:2px;">⚠️ ${f.visa_warnings}</div>` : ''}
+              </td>
+              <td>
+                <div style="font-size:0.83rem; font-weight:600; color:var(--text); white-space:nowrap;">🛫 ${depStr}</div>
+                <div style="font-size:0.75rem; color:var(--muted); margin-top:2px; white-space:nowrap;">🛬 ${retStr}</div>
               </td>
               <td><span class="badge badge-purple">${f.hops || 1} ${Number(f.hops) === 1 ? 'Direct' : 'Flights'}</span></td>
               <td><strong>${f.airlines || '—'}</strong></td>
@@ -1267,6 +1331,8 @@ Audit baggage policies, credit card surcharges, and transit visa requirements.
 Return ONLY valid JSON matching this exact structure:
 {
   "best_route_summary": "${origin} ➔ HNL ➔ LAX ➔ ${dest}",
+  "best_depart_date": "Exact depart date e.g. 2027-08-04",
+  "best_return_date": "Exact return date e.g. 2027-08-25 (or One-Way)",
   "best_net_fare": 0.0,
   "best_engine": "Skyscanner",
   "verdict": "EXCELLENT DEAL | GOOD FARE | EXPENSIVE / WAIT",
@@ -1274,6 +1340,8 @@ Return ONLY valid JSON matching this exact structure:
   "combinations": [
     {
       "route_summary": "${origin} ➔ ... ➔ ${dest}",
+      "deal_depart_date": "Exact depart date for this deal e.g. 2027-08-04",
+      "deal_return_date": "Exact return date for this deal e.g. 2027-08-25",
       "hops": 1,
       "airlines": "Airline Names",
       "duration_hours": 24.5,
@@ -1316,6 +1384,8 @@ ${corridorCOut}`;
             destination: dest,
             depart_date: departDate,
             return_date: returnDate,
+            best_depart_date: result.best_depart_date || departDate,
+            best_return_date: result.best_return_date || returnDate,
             trip_type: tripType,
             cabin_class: cabin,
             checked_bag: checkedBag,
@@ -1332,18 +1402,24 @@ ${corridorCOut}`;
           localStorage.setItem('ps_local_flight_watchlist', JSON.stringify(filteredWatch));
 
           const localOffers = JSON.parse(localStorage.getItem('ps_local_flight_offers') || '[]');
-          const newOffers = (result.combinations || []).map(c => ({
-            ...c,
-            origin: origin,
-            destination: dest,
-            depart_date: departDate,
-            return_date: returnDate,
-            currency: currency,
-            timestamp: nowStr,
-            skyscanner_url: c.skyscanner_url || buildSkyscannerUrl(origin, dest, departDate, returnDate),
-            google_flights_url: c.google_flights_url || buildGoogleFlightsUrl(origin, dest, departDate, returnDate),
-            kayak_url: c.kayak_url || buildKayakUrl(origin, dest, departDate, returnDate)
-          }));
+          const newOffers = (result.combinations || []).map(c => {
+            const depD = c.deal_depart_date || departDate;
+            const retD = c.deal_return_date || returnDate;
+            return {
+              ...c,
+              origin: origin,
+              destination: dest,
+              depart_date: departDate,
+              return_date: returnDate,
+              deal_depart_date: depD,
+              deal_return_date: retD,
+              currency: currency,
+              timestamp: nowStr,
+              skyscanner_url: (c.skyscanner_url && c.skyscanner_url.includes('adultsv2')) ? c.skyscanner_url : buildSkyscannerUrl(origin, dest, depD, retD),
+              google_flights_url: (c.google_flights_url && c.google_flights_url.includes('travel/flights?q=')) ? c.google_flights_url : buildGoogleFlightsUrl(origin, dest, depD, retD),
+              kayak_url: (c.kayak_url && c.kayak_url.includes('kayak.com.au/flights/')) ? c.kayak_url : buildKayakUrl(origin, dest, depD, retD)
+            };
+          });
           localStorage.setItem('ps_local_flight_offers', JSON.stringify([...newOffers, ...localOffers]));
 
           if (result.deal_booking_guide && result.deal_booking_guide.length > 0) {

@@ -250,9 +250,11 @@ You are the **Layover Safety & Fare Rules Auditor (`hacker-stitcher-auditor`)**.
    - Check if pricing the exact itinerary on Skyscanner or airline sites in foreign currencies (e.g., JPY, EUR, USD, BRL) yields a net discount after foreign exchange conversion.
 4. **Transit Visa & Immigration Check**:
    - Flag whether intermediate transit points require transit visas or electronic travel authorizations (e.g., US ESTA for US transit, Canada eTA, Japan transit, Schengen visa rules).
-5. **Generate 1-Click Search Engine URLs**:
-   - Construct valid pre-populated search URLs for:
-     - **Skyscanner**: `https://www.skyscanner.com.au/transport/flights/{{ORIGIN_LOWER}}/{{DEST_LOWER}}/`
-     - **Google Flights**: `https://www.google.com/travel/flights?q=Flights%20to%20{{DESTINATION}}%20from%20{{ORIGIN}}%20on%20{{DEPART_DATE}}`
-     - **Kayak**: `https://www.kayak.com.au/flights/{{ORIGIN}}-{{DESTINATION}}/{{DEPART_DATE}}/{{RETURN_DATE}}`
+5. **Extract Exact Travel Deal Dates**:
+   - Provide exact `deal_depart_date` (e.g., `2027-08-04`) and `deal_return_date` (e.g., `2027-08-25`) discovered for every combination.
+6. **Generate 1-Click Search Engine URLs**:
+   - Construct valid pre-populated search URLs using normalized dates:
+     - **Skyscanner**: `https://www.skyscanner.com.au/transport/flights/{{ORIGIN_LOWER}}/{{DEST_LOWER}}/{{YYMMDD_DEP}}/{{YYMMDD_RET}}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home`
+     - **Google Flights**: `https://www.google.com/travel/flights?q=Flights%20from%20{{ORIGIN}}%20to%20{{DESTINATION}}%20departing%20{{YYYY-MM-DD_DEP}}%20returning%20{{YYYY-MM-DD_RET}}`
+     - **Kayak**: `https://www.kayak.com.au/flights/{{ORIGIN}}-{{DESTINATION}}/{{YYYY-MM-DD_DEP}}/{{YYYY-MM-DD_RET}}?sort=price_a`
 ```
