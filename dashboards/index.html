@@ -819,6 +819,24 @@
       cfgGhRepo.value = localStorage.getItem('ps_gh_repo') || 'webrs-svg/deep-price-agent';
       cfgGhToken.value = localStorage.getItem('ps_gh_token') || '';
 
+      // Check URL hash for 1-click private key configuration (never sent to server)
+      if (window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const orKey = hashParams.get('openrouter') || hashParams.get('openrouter_key');
+        const gemKey = hashParams.get('gemini') || hashParams.get('gemini_key');
+        if (orKey) {
+          localStorage.setItem('ps_backup_key', orKey.trim());
+          if (cfgBackupKey) cfgBackupKey.value = orKey.trim();
+        }
+        if (gemKey) {
+          localStorage.setItem('ps_gemini_key', gemKey.trim());
+          if (cfgGeminiKey) cfgGeminiKey.value = gemKey.trim();
+        }
+        if (orKey || gemKey) {
+          history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }
+
       toggleSettingsBtn.addEventListener('click', () => settingsDrawer.classList.toggle('open'));
       document.getElementById('save-settings-btn').addEventListener('click', () => {
         localStorage.setItem('ps_gemini_key', cfgGeminiKey.value.trim());
