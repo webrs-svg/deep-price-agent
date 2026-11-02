@@ -340,17 +340,28 @@
       </div>
       <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
         <div class="field">
-          <label>Gemini API Key (For Live Phone Runs)</label>
-          <input type="password" id="cfg-gemini-key" class="input" placeholder="AIzaSy..." />
+          <label>Gemini API Key(s) (Auto-Rotation on Quota)</label>
+          <input type="password" id="cfg-gemini-key" class="input" placeholder="AIzaSy... (paste 1 or multiple separated by comma)" />
+          <div style="font-size:0.72rem; color:var(--muted); margin-top:3px;">
+            💡 Paste multiple free keys separated by comma to auto-rotate if you hit quota.
+          </div>
         </div>
         <div class="field">
-          <label>Gemini Model &amp; Search Mode</label>
+          <label>Primary AI Model</label>
           <select id="cfg-gemini-model" class="select">
-            <option value="auto">Auto (Smart Free-Tier Fallback)</option>
-            <option value="gemini-3.8-flash">gemini-3.8-flash (Latest Recommended)</option>
+            <option value="auto">Auto (Smart Free-Tier Cascade: 2.5-Flash ➔ 3.5-Lite ➔ 1.5-Flash)</option>
+            <option value="gemini-2.5-flash">gemini-2.5-flash (Most Generous: 500 Free Grounded Searches/Day)</option>
+            <option value="gemini-3.8-flash">gemini-3.8-flash (Latest Model)</option>
             <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (High-Speed Lite)</option>
-            <option value="gemini-2.5-flash">gemini-2.5-flash (500 Free Grounded Searches/Day)</option>
+            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (Ultra-Fast Free)</option>
           </select>
+        </div>
+        <div class="field">
+          <label>Backup Free AI Key (OpenRouter Free Tier)</label>
+          <input type="password" id="cfg-backup-key" class="input" placeholder="sk-or-v1-... (optional free fallback)" />
+          <div style="font-size:0.72rem; color:var(--muted); margin-top:3px;">
+            Free OpenRouter key (e.g. meta-llama/llama-3.3-70b-instruct:free) if Gemini quota is exceeded.
+          </div>
         </div>
         <div class="field">
           <label>GitHub Repo (`owner/repo` for 24/7 Cloud Watch)</label>
@@ -795,10 +806,12 @@
       const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
       const cfgGeminiKey = document.getElementById('cfg-gemini-key');
       const cfgGeminiModel = document.getElementById('cfg-gemini-model');
+      const cfgBackupKey = document.getElementById('cfg-backup-key');
       const cfgGhRepo = document.getElementById('cfg-gh-repo');
       const cfgGhToken = document.getElementById('cfg-gh-token');
 
       cfgGeminiKey.value = localStorage.getItem('ps_gemini_key') || '';
+      if (cfgBackupKey) cfgBackupKey.value = localStorage.getItem('ps_backup_key') || '';
       if (cfgGeminiModel) {
         cfgGeminiModel.value = localStorage.getItem('ps_gemini_model') || 'auto';
       }
@@ -808,6 +821,7 @@
       toggleSettingsBtn.addEventListener('click', () => settingsDrawer.classList.toggle('open'));
       document.getElementById('save-settings-btn').addEventListener('click', () => {
         localStorage.setItem('ps_gemini_key', cfgGeminiKey.value.trim());
+        if (cfgBackupKey) localStorage.setItem('ps_backup_key', cfgBackupKey.value.trim());
         if (cfgGeminiModel) localStorage.setItem('ps_gemini_model', cfgGeminiModel.value);
         localStorage.setItem('ps_gh_repo', cfgGhRepo.value.trim());
         localStorage.setItem('ps_gh_token', cfgGhToken.value.trim());
@@ -1248,21 +1262,56 @@
         return text;
       }
 
-      async function callGeminiGrounded(apiKey, prompt, jsonMode = false) {
+      async function callOpenRouterFree(apiKey, prompt, jsonMode = false) {
+        const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': 'https://webrs-svg.github.io/deep-price-agent/',
+            'X-Title': 'Deep Price & Flight Agent'
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.0-flash-lite-001:free',
+            messages: [{ role: 'user', content: prompt }],
+            temperature: jsonMode ? 0.1 : 0.2,
+            ...(jsonMode ? { response_format: { type: 'json_object' } } : {})
+          })
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          throw new Error(`OpenRouter Error (${res.status}): ${t}`);
+        }
+        const data = await res.json();
+        return (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+      }
+
+      async function callGeminiGrounded(apiKeysStr, prompt, jsonMode = false) {
+        // Parse keys (supports single key or comma-separated list of keys for auto-rotation)
+        const keys = (apiKeysStr || '').split(/[,;\n]/).map(k => k.trim()).filter(Boolean);
+        if (keys.length === 0) throw new Error('No API Key provided. Please paste your Gemini API key in ⚙️ Setup.');
+
+        const backupKey = localStorage.getItem('ps_backup_key') || '';
         const pref = localStorage.getItem('ps_gemini_model') || 'auto';
+
+        // Build attempt chain with free-tier priorities
+        // Priority for grounding: gemini-2.5-flash (most generous: 500 searches/day on free tier)
         const attempts = [];
         if (jsonMode) {
-          const primary = pref === 'auto' ? 'gemini-3.8-flash' : pref;
+          const primary = pref === 'auto' ? 'gemini-2.5-flash' : pref;
           attempts.push({ model: primary, ground: false });
-          if (primary !== 'gemini-3.8-flash') attempts.push({ model: 'gemini-3.8-flash', ground: false });
+          if (primary !== 'gemini-2.5-flash') attempts.push({ model: 'gemini-2.5-flash', ground: false });
           if (primary !== 'gemini-3.5-flash-lite') attempts.push({ model: 'gemini-3.5-flash-lite', ground: false });
+          if (primary !== 'gemini-3.8-flash') attempts.push({ model: 'gemini-3.8-flash', ground: false });
+          attempts.push({ model: 'gemini-1.5-flash', ground: false });
         } else {
-          // Strict Zero-Hallucination Policy: Only run with verified Google Search Grounding
           if (pref !== 'auto') attempts.push({ model: pref, ground: true });
           attempts.push(
+            { model: 'gemini-2.5-flash', ground: true },       // 500 Free Grounded Searches/Day
+            { model: 'gemini-3.5-flash-lite', ground: true },  // Fast Lite
+            { model: 'gemini-2.5-flash-lite', ground: true },
             { model: 'gemini-3.8-flash', ground: true },
-            { model: 'gemini-2.5-flash', ground: true },
-            { model: 'gemini-3.5-flash-lite', ground: true }
+            { model: 'gemini-1.5-flash', ground: true }
           );
         }
 
@@ -1274,19 +1323,61 @@
           return true;
         });
 
+        // 1. Iterate across all provided keys & models
         let lastErr = null;
-        for (let i = 0; i < uniqueAttempts.length; i++) {
-          const { model, ground } = uniqueAttempts[i];
-          try {
-            return await callGeminiSingleAttempt(apiKey, model, prompt, jsonMode, ground);
-          } catch (err) {
-            lastErr = err;
-            const msg = String(err.rawText || err.message || '');
-            const isQuotaOrNotFound = err.status === 429 || err.status === 404 || err.status === 400 || err.status === 503 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota');
-            if (!isQuotaOrNotFound) throw err;
-            if (err.status === 429 && !msg.includes('limit: 0')) await sleep(1500);
+        let hitQuotaOnAll = false;
+        for (let kIdx = 0; kIdx < keys.length; kIdx++) {
+          const currentKey = keys[kIdx];
+          for (let i = 0; i < uniqueAttempts.length; i++) {
+            const { model, ground } = uniqueAttempts[i];
+            try {
+              return await callGeminiSingleAttempt(currentKey, model, prompt, jsonMode, ground);
+            } catch (err) {
+              lastErr = err;
+              const msg = String(err.rawText || err.message || '');
+              const isQuota = err.status === 429 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota') || msg.includes('limit: 0');
+              const isNotFound = err.status === 404 || err.status === 400 || err.status === 503;
+              if (isQuota) {
+                hitQuotaOnAll = true;
+                // If user supplied multiple keys, rotate to next key immediately
+                if (keys.length > 1 && kIdx < keys.length - 1) {
+                  console.warn(`[Key Rotation] Key ${kIdx+1} hit quota on ${model}. Rotating to Key ${kIdx+2}...`);
+                  break;
+                }
+              }
+              if (!isQuota && !isNotFound) throw err;
+              if (err.status === 429 && !msg.includes('limit: 0')) await sleep(1200);
+            }
           }
         }
+
+        // 2. Optional OpenRouter Free Tier Fallback
+        if (backupKey && backupKey.startsWith('sk-or-')) {
+          try {
+            console.log('[OpenRouter Fallback] Calling free OpenRouter model...');
+            return await callOpenRouterFree(backupKey, prompt, jsonMode);
+          } catch (orErr) {
+            console.warn('[OpenRouter Fallback Error]', orErr);
+          }
+        }
+
+        // 3. Graceful Degraded Fallback: If live Google Search grounding quota was exhausted on all models,
+        // rather than crashing with an unhandled alert, synthesize using ungrounded Gemini with an explicit badge/notice!
+        if (!jsonMode && hitQuotaOnAll) {
+          console.warn('[Ungrounded Graceful Fallback] Search grounding quota exhausted. Falling back to ungrounded generation...');
+          const ungroundedModels = ['gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-1.5-flash', 'gemini-3.8-flash'];
+          for (const key of keys) {
+            for (const ugModel of ungroundedModels) {
+              try {
+                const resText = await callGeminiSingleAttempt(key, ugModel, prompt, false, false);
+                return resText + '\n\n> ⚠️ *Search Grounding Quota Exceeded on Free Key: Route & schedule synthesized using airline timetable knowledge. Confirm live fares with the 1-click links below.*';
+              } catch (e) {
+                // continue to next ungrounded model
+              }
+            }
+          }
+        }
+
         throw lastErr;
       }
 
