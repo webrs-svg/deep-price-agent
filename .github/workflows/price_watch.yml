@@ -1,31 +1,70 @@
-name: 24/7 Deep Price & Deal Watch
+name: 24/7 Deep Price, Deals & Multi-Hop Flight Watch
 
 on:
   # Runs automatically every 6 hours in the cloud (even when your PC is turned off)
   schedule:
     - cron: "0 */6 * * *"
 
-  # Allows triggering an immediate deep research run from the GitHub Mobile App or browser
+  # Allows triggering an immediate deep research run from GitHub Mobile or browser
   workflow_dispatch:
     inputs:
+      mode:
+        description: "Search Mode ('product' or 'flight')"
+        required: true
+        default: "flight"
+        type: choice
+        options:
+          - flight
+          - product
+
+      # Flight Mode Inputs
+      origin:
+        description: "[Flight Mode] Origin airport or city (e.g. SYD, LHR, JFK)"
+        required: false
+        default: "SYD"
+      destination:
+        description: "[Flight Mode] Destination airport or city (e.g. SEA, DPS, NRT)"
+        required: false
+        default: "SEA"
+      depart_date:
+        description: "[Flight Mode] Departure date or month (e.g. 2027-08-01 or August 2027)"
+        required: false
+        default: "August 2027"
+      return_date:
+        description: "[Flight Mode] Return date or month (e.g. 2027-08-28)"
+        required: false
+        default: "August 2027"
+      trip_type:
+        description: "[Flight Mode] Trip type"
+        required: false
+        default: "return"
+        type: choice
+        options:
+          - return
+          - one-way
+      checked_bag:
+        description: "[Flight Mode] Include 1 Checked Bag (23kg)"
+        required: false
+        default: false
+        type: boolean
+
+      # Product Mode Inputs
       product_query:
-        description: "Product name to research (leave blank to check all items in data/watchlist.json)"
+        description: "[Product Mode] Product name to research"
         required: false
         default: ""
       sku:
-        description: "Optional exact SKU / Model / Variant"
+        description: "[Product Mode] Exact SKU / Model / Variant"
         required: false
         default: ""
-      region:
-        description: "Target region (AU, US, UK, EU, etc.)"
-        required: false
-        default: "AU"
+
+      # Common Inputs
       currency:
-        description: "Target currency (AUD, USD, GBP, EUR, etc.)"
+        description: "Target currency (AUD, USD, GBP, EUR, JPY, etc.)"
         required: false
         default: "AUD"
       target_price:
-        description: "Optional target buy price for deal alerts"
+        description: "Optional target price / fare alert threshold"
         required: false
         default: ""
 
@@ -34,9 +73,9 @@ permissions:
   issues: write
 
 jobs:
-  deep-price-research:
+  deep-price-and-flight-research:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -52,30 +91,47 @@ jobs:
       - name: Install dependencies
         run: pip install -r cloud/requirements.txt
 
-      - name: Run Multi-Agent Deep Price Orchestrator
+      - name: Run Multi-Agent Deep Orchestrator
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
         run: |
-          if [ -n "${{ inputs.product_query }}" ]; then
+          if [ "${{ inputs.mode }}" = "flight" ]; then
+            BAG_FLAG=""
+            if [ "${{ inputs.checked_bag }}" = "true" ]; then
+              BAG_FLAG="--checked-bag"
+            fi
             python cloud/cloud_runner.py \
+              --mode flight \
+              --origin "${{ inputs.origin }}" \
+              --destination "${{ inputs.destination }}" \
+              --depart-date "${{ inputs.depart_date }}" \
+              --return-date "${{ inputs.return_date }}" \
+              --trip-type "${{ inputs.trip_type }}" \
+              --currency "${{ inputs.currency }}" \
+              --target-price "${{ inputs.target_price }}" \
+              $BAG_FLAG
+          elif [ -n "${{ inputs.product_query }}" ]; then
+            python cloud/cloud_runner.py \
+              --mode product \
               --product "${{ inputs.product_query }}" \
               --sku "${{ inputs.sku }}" \
-              --region "${{ inputs.region }}" \
               --currency "${{ inputs.currency }}" \
               --target-price "${{ inputs.target_price }}"
           else
-            python cloud/cloud_runner.py
+            # Scheduled run: check all active items in both watchlists
+            python cloud/cloud_runner.py --mode product
+            python cloud/cloud_runner.py --mode flight
           fi
 
       - name: Commit & Push Updated Reports, Watchlist, and HTML Dashboard
         run: |
-          git config user.name "24/7 Price Research Agent"
+          git config user.name "24/7 Travel & Price Agent"
           git config user.email "actions@github.com"
           git add data/ reports/ dashboards/
           if git diff --staged --quiet; then
-            echo "No price changes to commit."
+            echo "No price or flight changes to commit."
           else
-            git commit -m "chore(prices): automated 24/7 multi-agent price & deal update [skip ci]"
+            git commit -m "chore(travel): automated 24/7 multi-agent flight & price update [skip ci]"
             git push
           fi

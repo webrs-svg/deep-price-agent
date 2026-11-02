@@ -1,4 +1,4 @@
-const CACHE_NAME = 'price-scout-pwa-v3';
+const CACHE_NAME = 'price-scout-pwa-v4';
 const ASSETS = [
   './',
   './index.html',
@@ -24,7 +24,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  // Network-first for HTML/JSON so live price updates from GitHub Actions always show up fresh
+  // Network-first for HTML/JSON so live price/flight updates always show up fresh
   event.respondWith(
     fetch(event.request)
       .then((response) => {

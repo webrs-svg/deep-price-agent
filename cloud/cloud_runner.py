@@ -1,21 +1,13 @@
 #!/usr/bin/env python3
 """
-24/7 Cloud Multi-Agent Orchestrator for Deep Online Price & Deal Comparison.
+24/7 Cloud Multi-Agent Orchestrator for Deep Online Price & Deal Comparison
+AND Globally-Generic Multi-Hop Flight Search & Combiner.
 
-Reads the EXACT same Markdown directive files used by Antigravity locally:
-- AGENTS.md
-- .agents/skills/deep-price-research/references/subagent-prompts.md
-- .agents/skills/deep-price-research/references/deal-sources-by-region.md
-- data/watchlist.json
-
-Spawns 3 concurrent Gemini subagents with live Google Search Grounding:
-1. price-scout
-2. deal-hunter
-3. trust-auditor
-
-Synthesizes the True Net Landed Price, updates data/watchlist.json,
-data/price_history.json, reports/<slug>-<date>.md, reports/INDEX.md,
-and dashboards/index.html.
+Modes:
+- 'product': 3 parallel subagents (price-scout, deal-hunter, trust-auditor)
+- 'flight': 5 parallel subagents (departure-hub-mapper, corridor-a-scout, corridor-b-scout,
+            corridor-c-scout, hacker-stitcher-auditor) testing 1/2/3/4-flight combos,
+            3h safety layovers, checked bag calculations, and deep booking links.
 """
 
 from __future__ import annotations
@@ -27,6 +19,7 @@ import json
 import os
 import re
 import sys
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -49,17 +42,25 @@ SOURCES_MD_PATH = (
     / "references"
     / "deal-sources-by-region.md"
 )
+
+# Product paths
 WATCHLIST_PATH = WORKSPACE_ROOT / "data" / "watchlist.json"
 HISTORY_PATH = WORKSPACE_ROOT / "data" / "price_history.json"
 REPORTS_DIR = WORKSPACE_ROOT / "reports"
 DASHBOARD_PATH = WORKSPACE_ROOT / "dashboards" / "index.html"
+
+# Flight paths
+FLIGHT_WATCHLIST_PATH = WORKSPACE_ROOT / "data" / "flight_watchlist.json"
+FLIGHT_HISTORY_PATH = WORKSPACE_ROOT / "data" / "flight_history.json"
+FLIGHT_REPORTS_DIR = WORKSPACE_ROOT / "reports" / "flights"
+FLIGHT_INDEX_PATH = WORKSPACE_ROOT / "reports" / "flights-INDEX.md"
 
 DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 
 
 def slugify(text: str) -> str:
     slug = re.sub(r"[^a-zA-Z0-9]+", "-", text.strip().lower()).strip("-")
-    return slug or "product"
+    return slug or "item"
 
 
 def load_text(path: Path) -> str:
@@ -71,7 +72,10 @@ def load_text(path: Path) -> str:
 def load_json(path: Path, default: Any) -> Any:
     if not path.exists():
         return default
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return default
 
 
 def save_json(path: Path, data: Any) -> None:
@@ -80,28 +84,53 @@ def save_json(path: Path, data: Any) -> None:
 
 
 def extract_subagent_templates(prompts_md: str) -> dict[str, str]:
-    """Parses the ```markdown ... ``` blocks for each subagent from subagent-prompts.md."""
-    blocks = re.findall(r"```markdown\n(.*?)```", prompts_md, flags=re.DOTALL)
-    roles = ["price-scout", "deal-hunter", "trust-auditor", "travel-accommodation-scout"]
-    templates: dict[str, str] = {}
-    for idx, role in enumerate(roles):
-        if idx < len(blocks):
-            templates[role] = blocks[idx].strip()
+    """Extracts subagent templates using regex on headers containing role backticks."""
+    pattern = r"## Subagent.*?`([a-z0-9_-]+)`.*?```markdown\n(.*?)```"
+    matches = re.findall(pattern, prompts_md, flags=re.DOTALL)
+    templates = {role.strip(): block.strip() for role, block in matches}
     return templates
 
 
-def render_prompt(template: str, item: dict[str, Any]) -> str:
-    replacements = {
-        "{{PRODUCT_NAME}}": str(item.get("name", "")),
-        "{{SKU_OR_SPECS}}": str(item.get("sku", item.get("name", ""))),
-        "{{REGION}}": str(item.get("region", "AU")),
-        "{{CURRENCY}}": str(item.get("currency", "AUD")),
-        "{{TARGET_PRICE}}": str(item.get("target_price", "Best Available")),
-    }
+def render_prompt(template: str, replacements: dict[str, Any]) -> str:
     out = template
     for k, v in replacements.items():
-        out = out.replace(k, v)
+        out = out.replace(f"{{{{{k}}}}}", str(v))
     return out
+
+
+# Deep Link Generators for Flights
+def build_skyscanner_url(origin: str, dest: str, depart_date: str = "", return_date: str = "") -> str:
+    o = origin.strip().lower()
+    d = dest.strip().lower()
+    # If YYYY-MM-DD convert to YYMMDD, otherwise fallback to month
+    dep_str = re.sub(r"\D", "", depart_date)
+    ret_str = re.sub(r"\D", "", return_date)
+    dep_slug = dep_str[2:8] if len(dep_str) >= 8 else (dep_str if dep_str else "")
+    ret_slug = ret_str[2:8] if len(ret_str) >= 8 else (ret_str if ret_str else "")
+    if dep_slug and ret_slug:
+        return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/{dep_slug}/{ret_slug}/"
+    elif dep_slug:
+        return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/{dep_slug}/"
+    return f"https://www.skyscanner.com.au/transport/flights/{o}/{d}/"
+
+
+def build_google_flights_url(origin: str, dest: str, depart_date: str = "", return_date: str = "") -> str:
+    query = f"Flights to {dest.upper()} from {origin.upper()}"
+    if depart_date:
+        query += f" on {depart_date}"
+    if return_date:
+        query += f" returning {return_date}"
+    return f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
+
+
+def build_kayak_url(origin: str, dest: str, depart_date: str = "", return_date: str = "") -> str:
+    o = origin.strip().upper()
+    d = dest.strip().upper()
+    if depart_date and return_date:
+        return f"https://www.kayak.com.au/flights/{o}-{d}/{depart_date}/{return_date}"
+    elif depart_date:
+        return f"https://www.kayak.com.au/flights/{o}-{d}/{depart_date}"
+    return f"https://www.kayak.com.au/flights/{o}-{d}"
 
 
 async def run_grounded_subagent(
@@ -114,10 +143,11 @@ async def run_grounded_subagent(
     from google.genai import types
 
     print(f"  [Subagent Start] -> {role_name}")
-    # Fallback chain:
-    # 1. Preferred model (e.g. gemini-3.8-flash) with Google Search grounding
-    # 2. gemini-2.5-flash with Google Search grounding (has 500 RPD free grounding quota on Free Tier)
-    # 3. gemini-3.8-flash / gemini-3.5-flash-lite without grounding tool if all search quotas are exhausted
+    # Fallback chain for quotas:
+    # 1. Preferred model (gemini-3.8-flash) with Google Search grounding
+    # 2. gemini-2.5-flash with Google Search grounding (500 RPD free on unpaid Free Tier)
+    # 3. gemini-3.5-flash-lite with Google Search grounding
+    # 4. gemini-3.8-flash / gemini-3.5-flash-lite standard inference
     attempts = [
         (DEFAULT_MODEL, True),
         ("gemini-2.5-flash", True),
@@ -147,7 +177,7 @@ async def run_grounded_subagent(
             last_exc = exc
             err_str = str(exc)
             if any(k in err_str for k in ("429", "RESOURCE_EXHAUSTED", "quota", "404", "400", "503")):
-                print(f"  [Subagent Fallback] {role_name} hit quota/limit on {model_name} (grounding={use_grounding}), trying next fallback...")
+                print(f"  [Subagent Fallback] {role_name} hit limit on {model_name} (grounding={use_grounding}), attempting fallback...")
                 if "429" in err_str and "limit: 0" not in err_str:
                     await asyncio.sleep(1.5)
                 continue
@@ -178,6 +208,9 @@ async def run_grounded_subagent(
     return text
 
 
+# =====================================================================
+# PRODUCT MODE SYNTHESIS
+# =====================================================================
 async def synthesize_net_landed_price(
     client: Any,
     item: dict[str, Any],
@@ -186,7 +219,6 @@ async def synthesize_net_landed_price(
     deal_out: str,
     trust_out: str,
 ) -> dict[str, Any]:
-    """Runs the Lead Orchestrator synthesis step producing both structured JSON and a full Markdown report."""
     from google.genai import types
     from pydantic import BaseModel, Field
 
@@ -233,7 +265,6 @@ Calculate the True Net Landed Price for every verified retailer option:
 Net Landed Price = base_price + shipping - promo_discount - cashback_amount.
 Provide the structured JSON response including a rich, comprehensive `markdown_report`.
 """
-
     response = None
     last_exc: Exception | None = None
     for model_name in dict.fromkeys([DEFAULT_MODEL, "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"]):
@@ -260,16 +291,141 @@ Provide the structured JSON response including a rich, comprehensive `markdown_r
     return json.loads(response.text)
 
 
-def update_dashboard_html(watchlist_data: dict[str, Any], history_data: dict[str, Any], now_iso: str) -> None:
+# =====================================================================
+# FLIGHT MODE SYNTHESIS
+# =====================================================================
+async def synthesize_flight_routes(
+    client: Any,
+    route_info: dict[str, Any],
+    agents_md: str,
+    mapper_out: str,
+    corridor_a_out: str,
+    corridor_b_out: str,
+    corridor_c_out: str,
+    stitcher_out: str,
+) -> dict[str, Any]:
+    from google.genai import types
+    from pydantic import BaseModel, Field
+
+    class FlightCombination(BaseModel):
+        route_summary: str = Field(description="Full routing e.g. SYD ➔ HNL ➔ LAX ➔ SEA")
+        hops: int = Field(description="Number of flight legs: 1 (direct), 2, 3, or 4")
+        airlines: str = Field(description="Airlines involved e.g. Jetstar + Southwest + Alaska")
+        duration_hours: float = Field(description="Total one-way or round-trip duration in hours")
+        layovers_summary: str = Field(description="Key layover cities and hours e.g. HNL (3.5h), LAX (4.0h)")
+        safety_buffer_met: bool = Field(description="True if all self-transfer layovers are >= 3.0 hours")
+        ticket_type: str = Field(description="'Single Ticket (Protected)' or 'Self-Transfer (Hacker Fare)'")
+        base_fare: float = Field(description="Base ticket fare in requested currency")
+        checked_bag_fee: float = Field(description="Checked bag add-on fee (0 if included)")
+        net_fare: float = Field(description="base_fare + checked_bag_fee + taxes")
+        cheapest_engine: str = Field(description="Skyscanner, Google Flights, Kayak, or Airline Direct")
+        skyscanner_price: float | None = None
+        google_flights_price: float | None = None
+        kayak_price: float | None = None
+        skyscanner_url: str = Field(description="Direct search link to Skyscanner")
+        google_flights_url: str = Field(description="Direct search link to Google Flights")
+        kayak_url: str = Field(description="Direct search link to Kayak")
+        visa_warnings: str = Field(description="Transit visa / ESTA / eTA requirements or None")
+        pos_arbitrage_note: str = Field(description="Savings if booked in foreign currency or None")
+
+    class FlightSynthesisResult(BaseModel):
+        best_route_summary: str
+        best_net_fare: float
+        best_engine: str
+        verdict: str = Field(description="EXCELLENT DEAL, GOOD FARE, or EXPENSIVE / WAIT")
+        currency: str
+        combinations: list[FlightCombination]
+        deal_booking_guide: list[str] = Field(description="Step-by-step hacker booking instructions")
+        markdown_report: str = Field(description="Comprehensive Markdown flight report with tables and deep links")
+
+    origin = route_info.get("origin", "")
+    dest = route_info.get("destination", "")
+    dep = route_info.get("depart_date", "")
+    ret = route_info.get("return_date", "")
+    curr = route_info.get("currency", "AUD")
+    bag = "Checked Bag Included" if route_info.get("checked_bag") else "Carry-On Only"
+
+    synth_prompt = f"""
+You are the Lead Flight Orchestrator following AGENTS.md.
+Synthesize the multi-agent flight research for:
+- Route: {origin} to {dest} ({route_info.get('trip_type', 'return')})
+- Dates: Depart: {dep}, Return: {ret}
+- Cabin: {route_info.get('cabin_class', 'Economy')}
+- Luggage Mode: {bag}
+- Currency: {curr}
+
+--- SUBAGENT 1 (departure-hub-mapper) ---
+{mapper_out}
+
+--- SUBAGENT 2 (corridor-a-scout - Direct & Standard Alliance) ---
+{corridor_a_out}
+
+--- SUBAGENT 3 (corridor-b-scout - Continental Mega-Hubs) ---
+{corridor_b_out}
+
+--- SUBAGENT 4 (corridor-c-scout - LCC & 2/3/4-Flight Hacker Chains) ---
+{corridor_c_out}
+
+--- SUBAGENT 5 (hacker-stitcher-auditor - 3h Layover Buffer, Baggage, Visas) ---
+{stitcher_out}
+
+Mandatory Rules:
+1. Enforce 3.0h safety layover buffer on all self-transfers.
+2. Generate valid pre-populated Skyscanner, Google Flights, and Kayak URLs for every combination.
+3. Compare all options (direct, 2-hop, 3-hop, 4-hop) and rank by True Net Flight Fare.
+Return ONLY structured JSON matching FlightSynthesisResult.
+"""
+
+    response = None
+    last_exc: Exception | None = None
+    for model_name in dict.fromkeys([DEFAULT_MODEL, "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"]):
+        try:
+            response = await client.aio.models.generate_content(
+                model=model_name,
+                contents=synth_prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=agents_md,
+                    response_mime_type="application/json",
+                    response_schema=FlightSynthesisResult,
+                    temperature=0.1,
+                ),
+            )
+            break
+        except Exception as exc:
+            last_exc = exc
+            if any(k in str(exc) for k in ("429", "RESOURCE_EXHAUSTED", "quota", "404", "503")):
+                await asyncio.sleep(1.5)
+                continue
+            raise
+
+    if response is None and last_exc is not None:
+        raise last_exc
+    return json.loads(response.text)
+
+
+# =====================================================================
+# DASHBOARD & INDEX HTML GENERATION
+# =====================================================================
+def update_dashboard_html(
+    watchlist_data: dict[str, Any],
+    history_data: dict[str, Any],
+    flight_watchlist_data: dict[str, Any],
+    flight_history_data: dict[str, Any],
+    now_iso: str,
+) -> None:
     """Updates the embedded window.PRICE_AGENT_DATA block inside dashboards/index.html."""
     if not DASHBOARD_PATH.exists():
         return
     html = DASHBOARD_PATH.read_text(encoding="utf-8")
     latest_offers = history_data.get("records", [])[-50:]
+    latest_flights = flight_history_data.get("records", [])[-50:]
+
     payload = {
         "last_updated": now_iso,
         "watchlist": watchlist_data.get("items", []),
         "offers": latest_offers,
+        "flight_watchlist": flight_watchlist_data.get("routes", []),
+        "flight_offers": latest_flights,
     }
     replacement = (
         "<!-- BEGIN_AGENT_DATA -->\n  <script>\n    window.PRICE_AGENT_DATA = "
@@ -312,11 +468,45 @@ def update_reports_index(watchlist_items: list[dict[str, Any]]) -> None:
 
 ## Quick Links
 - **Core Agent Directives**: [`AGENTS.md`](file:///c:/Users/weber/Documents/Travel/AGENTS.md)
-- **Deep Price Research Skill Runbook**: [`.agents/skills/deep-price-research/SKILL.md`](file:///c:/Users/weber/Documents/Travel/.agents/skills/deep-price-research/SKILL.md)
+- **Flight Reports Index**: [`reports/flights-INDEX.md`](file:///c:/Users/weber/Documents/Travel/reports/flights-INDEX.md)
 - **Interactive HTML Dashboard**: [`dashboards/index.html`](file:///c:/Users/weber/Documents/Travel/dashboards/index.html)
 """
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     (REPORTS_DIR / "INDEX.md").write_text(content, encoding="utf-8")
+
+
+def update_flight_reports_index(flight_routes: list[dict[str, Any]]) -> None:
+    """Rebuilds reports/flights-INDEX.md table from the latest flight watchlist."""
+    rows = []
+    for f in flight_routes:
+        rep_link = f"[{f.get('latest_report', 'View')}](./flights/{f.get('latest_report')})" if f.get("latest_report") else "—"
+        rows.append(
+            f"| **{f.get('origin')}** ➔ **{f.get('destination')}** | `{f.get('depart_date', '—')}` | `{f.get('trip_type', 'return')}` | "
+            f"`{f.get('best_route_summary', '—')}` | {f.get('hops', '—')} | **{f.get('currency', 'AUD')} {f.get('best_net_fare', '—')}** | "
+            f"{f.get('best_engine', 'Skyscanner')} | {'Yes' if f.get('checked_bag') else 'Carry-on'} | `{f.get('last_checked', '—')}` | {rep_link} |"
+        )
+    table_body = "\n".join(rows) if rows else "| *No flight routes monitored yet* | — | — | — | — | — | — | — | — | — |"
+    content = f"""# Flight Search & Hub-Hopping Route Reports Index (`flights-INDEX.md`)
+
+> Automatically maintained by the Lead Flight Orchestrator Agent (Antigravity Local + 24/7 Cloud Runner).
+
+---
+
+## Active Monitored Flight Routes
+
+| Route | Dates | Trip Type | Best Route / Combination | Hops | Best Net Fare | Engine | Checked Bag | Last Checked | Report |
+| :--- | :---: | :---: | :--- | :---: | ---: | :---: | :---: | :---: | :---: |
+{table_body}
+
+---
+
+## Quick Links
+- **Directives & Rules**: [`AGENTS.md`](file:///c:/Users/weber/Documents/Travel/AGENTS.md)
+- **Product Reports Index**: [`reports/INDEX.md`](file:///c:/Users/weber/Documents/Travel/reports/INDEX.md)
+- **Interactive HTML Dashboard**: [`dashboards/index.html`](file:///c:/Users/weber/Documents/Travel/dashboards/index.html)
+"""
+    FLIGHT_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    FLIGHT_INDEX_PATH.write_text(content, encoding="utf-8")
 
 
 def send_webhook_alert(webhook_url: str, message: str) -> None:
@@ -335,7 +525,10 @@ def send_webhook_alert(webhook_url: str, message: str) -> None:
         print(f"  [Webhook Warning] Could not send webhook alert: {exc}")
 
 
-async def process_item(
+# =====================================================================
+# ITEM PROCESSING: PRODUCT MODE
+# =====================================================================
+async def process_product_item(
     client: Any,
     item: dict[str, Any],
     agents_md: str,
@@ -345,12 +538,20 @@ async def process_item(
     now_iso: str,
     date_str: str,
 ) -> dict[str, Any]:
-    print(f"\n=== Deep Researching: {item.get('name')} ({item.get('region', 'AU')} / {item.get('currency', 'AUD')}) ===")
+    print(f"\n=== [Product Mode] Deep Researching: {item.get('name')} ({item.get('region', 'AU')} / {item.get('currency', 'AUD')}) ===")
     sys_inst = agents_md + "\n\n### Regional Deal Sources Reference\n" + sources_md
 
-    scout_prompt = render_prompt(templates["price-scout"], item)
-    deal_prompt = render_prompt(templates["deal-hunter"], item)
-    trust_prompt = render_prompt(templates["trust-auditor"], item)
+    replacements = {
+        "PRODUCT_NAME": item.get("name", ""),
+        "SKU_OR_SPECS": item.get("sku", item.get("name", "")),
+        "REGION": item.get("region", "AU"),
+        "CURRENCY": item.get("currency", "AUD"),
+        "TARGET_PRICE": item.get("target_price", "Best Available"),
+    }
+
+    scout_prompt = render_prompt(templates["price-scout"], replacements)
+    deal_prompt = render_prompt(templates["deal-hunter"], replacements)
+    trust_prompt = render_prompt(templates["trust-auditor"], replacements)
 
     scout_out, deal_out, trust_out = await asyncio.gather(
         run_grounded_subagent(client, "price-scout", scout_prompt, sys_inst),
@@ -396,6 +597,127 @@ async def process_item(
     return item
 
 
+# =====================================================================
+# ITEM PROCESSING: FLIGHT MODE
+# =====================================================================
+async def process_flight_item(
+    client: Any,
+    route_info: dict[str, Any],
+    agents_md: str,
+    templates: dict[str, str],
+    flight_history_data: dict[str, Any],
+    now_iso: str,
+    date_str: str,
+) -> dict[str, Any]:
+    origin = route_info.get("origin", "SYD").upper()
+    dest = route_info.get("destination", "SEA").upper()
+    print(f"\n=== [Flight Mode] Exploring Multi-Hop Combinations: {origin} ➔ {dest} ({route_info.get('depart_date')}) ===")
+
+    replacements = {
+        "ORIGIN": origin,
+        "ORIGIN_LOWER": origin.lower(),
+        "DESTINATION": dest,
+        "DEST_LOWER": dest.lower(),
+        "DEPART_DATE": route_info.get("depart_date", "Flexible"),
+        "RETURN_DATE": route_info.get("return_date", "None"),
+        "TRIP_TYPE": route_info.get("trip_type", "return"),
+        "CABIN_CLASS": route_info.get("cabin_class", "Economy"),
+        "CHECKED_BAG": "1 Checked Bag (23kg)" if route_info.get("checked_bag") else "Carry-on Only",
+        "CURRENCY": route_info.get("currency", "AUD"),
+    }
+
+    # 1. Step 1: Map departure hubs & corridors
+    mapper_prompt = render_prompt(templates["departure-hub-mapper"], replacements)
+    mapper_out = await run_grounded_subagent(client, "departure-hub-mapper", mapper_prompt, agents_md)
+
+    # 2. Step 2: Parallel Corridor Scouts (Corridor A, B, and C)
+    sys_inst_corridors = agents_md + "\n\n### Hub Topology Context from departure-hub-mapper:\n" + mapper_out
+    corridor_a_prompt = render_prompt(templates["corridor-a-scout"], replacements)
+    corridor_b_prompt = render_prompt(templates["corridor-b-scout"], replacements)
+    corridor_c_prompt = render_prompt(templates["corridor-c-scout"], replacements)
+
+    corridor_a_out, corridor_b_out, corridor_c_out = await asyncio.gather(
+        run_grounded_subagent(client, "corridor-a-scout", corridor_a_prompt, sys_inst_corridors),
+        run_grounded_subagent(client, "corridor-b-scout", corridor_b_prompt, sys_inst_corridors),
+        run_grounded_subagent(client, "corridor-c-scout", corridor_c_prompt, sys_inst_corridors),
+    )
+
+    # 3. Step 3: Hacker Stitcher & Layover Auditor (enforces 3h buffer, visas, deep links)
+    stitcher_context = (
+        agents_md
+        + "\n\n### Corridor A Results:\n"
+        + corridor_a_out
+        + "\n\n### Corridor B Results:\n"
+        + corridor_b_out
+        + "\n\n### Corridor C Results:\n"
+        + corridor_c_out
+    )
+    stitcher_prompt = render_prompt(templates["hacker-stitcher-auditor"], replacements)
+    stitcher_out = await run_grounded_subagent(client, "hacker-stitcher-auditor", stitcher_prompt, stitcher_context)
+
+    # 4. Step 4: Lead Flight Route Synthesizer
+    synth = await synthesize_flight_routes(
+        client,
+        route_info,
+        agents_md,
+        mapper_out,
+        corridor_a_out,
+        corridor_b_out,
+        corridor_c_out,
+        stitcher_out,
+    )
+
+    route_slug = slugify(f"{origin}-{dest}")
+    report_filename = f"{route_slug}-{date_str}.md"
+    report_path = FLIGHT_REPORTS_DIR / report_filename
+    FLIGHT_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(synth["markdown_report"], encoding="utf-8")
+
+    route_info["best_route_summary"] = synth["best_route_summary"]
+    route_info["best_net_fare"] = synth["best_net_fare"]
+    route_info["best_engine"] = synth["best_engine"]
+    route_info["verdict"] = synth["verdict"]
+    route_info["last_checked"] = now_iso
+    route_info["latest_report"] = report_filename
+
+    # Record historical flight combinations
+    for combo in synth.get("combinations", []):
+        # Auto-ensure deep links are generated if model omitted
+        if not combo.get("skyscanner_url"):
+            combo["skyscanner_url"] = build_skyscanner_url(origin, dest, route_info.get("depart_date", ""), route_info.get("return_date", ""))
+        if not combo.get("google_flights_url"):
+            combo["google_flights_url"] = build_google_flights_url(origin, dest, route_info.get("depart_date", ""), route_info.get("return_date", ""))
+        if not combo.get("kayak_url"):
+            combo["kayak_url"] = build_kayak_url(origin, dest, route_info.get("depart_date", ""), route_info.get("return_date", ""))
+
+        flight_history_data.setdefault("records", []).append(
+            {
+                "timestamp": now_iso,
+                "origin": origin,
+                "destination": dest,
+                "depart_date": route_info.get("depart_date"),
+                "return_date": route_info.get("return_date"),
+                "currency": route_info.get("currency", "AUD"),
+                **combo,
+            }
+        )
+
+    target_fare = route_info.get("target_price")
+    if target_fare and synth["best_net_fare"] <= float(target_fare):
+        alert_msg = (
+            f"✈️ FLIGHT DEAL ALERT: {origin} ➔ {dest} hit {route_info.get('currency', 'AUD')} "
+            f"{synth['best_net_fare']} ({synth['best_route_summary']}) on {synth['best_engine']} "
+            f"(Target: {target_fare})!"
+        )
+        print(alert_msg)
+        send_webhook_alert(os.environ.get("ALERT_WEBHOOK_URL", ""), alert_msg)
+
+    return route_info
+
+
+# =====================================================================
+# MAIN ENTRYPOINT
+# =====================================================================
 async def main_async(args: argparse.Namespace) -> int:
     agents_md = load_text(AGENTS_MD_PATH)
     prompts_md = load_text(PROMPTS_MD_PATH)
@@ -408,12 +730,20 @@ async def main_async(args: argparse.Namespace) -> int:
     )
     history_data = load_json(HISTORY_PATH, {"schema_version": "1.0", "records": []})
 
+    flight_watchlist_data = load_json(
+        FLIGHT_WATCHLIST_PATH,
+        {"schema_version": "1.0", "default_currency": "AUD", "routes": []},
+    )
+    flight_history_data = load_json(FLIGHT_HISTORY_PATH, {"schema_version": "1.0", "records": []})
+
     if args.dry_run:
         print("✅ Dry-run check passed:")
         print(f"  - Loaded AGENTS.md ({len(agents_md)} bytes)")
-        print(f"  - Extracted subagent templates: {list(templates.keys())}")
-        print(f"  - Loaded regional deal sources ({len(sources_md)} bytes)")
-        print(f"  - Active watchlist items: {len(watchlist_data.get('items', []))}")
+        print(f"  - Extracted subagent templates ({len(templates)}): {list(templates.keys())}")
+        print(f"  - Active product watchlist items: {len(watchlist_data.get('items', []))}")
+        print(f"  - Active flight routes: {len(flight_watchlist_data.get('routes', []))}")
+        if args.mode == "flight":
+            print(f"  - Flight Mode Params: {args.origin or 'SYD'} ➔ {args.destination or 'SEA'} ({args.depart_date or 'Anytime'})")
         return 0
 
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -428,46 +758,101 @@ async def main_async(args: argparse.Namespace) -> int:
     now_iso = now.isoformat(timespec="seconds")
     date_str = now.strftime("%Y-%m-%d")
 
-    items: list[dict[str, Any]] = watchlist_data.setdefault("items", [])
+    mode = args.mode
 
-    # If ad-hoc product query passed via CLI or GitHub Actions workflow_dispatch
-    if args.product:
-        slug = slugify(args.product)
-        existing = next((x for x in items if x.get("id") == slug), None)
-        if not existing:
-            existing = {
-                "id": slug,
-                "name": args.product,
-                "sku": args.sku or args.product,
-                "region": args.region or watchlist_data.get("default_region", "AU"),
-                "currency": args.currency or watchlist_data.get("default_currency", "AUD"),
-                "target_price": float(args.target_price) if args.target_price else None,
-                "active": True,
-            }
-            items.append(existing)
-        await process_item(client, existing, agents_md, templates, sources_md, history_data, now_iso, date_str)
+    if mode == "flight":
+        routes: list[dict[str, Any]] = flight_watchlist_data.setdefault("routes", [])
+        if args.origin and args.destination:
+            o = args.origin.strip().upper()
+            d = args.destination.strip().upper()
+            existing = next((r for r in routes if r.get("origin") == o and r.get("destination") == d), None)
+            if not existing:
+                existing = {
+                    "id": slugify(f"{o}-{d}"),
+                    "origin": o,
+                    "destination": d,
+                    "depart_date": args.depart_date or "August 2027",
+                    "return_date": args.return_date or "August 2027",
+                    "trip_type": args.trip_type or "return",
+                    "cabin_class": args.cabin_class or "Economy",
+                    "checked_bag": bool(args.checked_bag),
+                    "currency": args.currency or flight_watchlist_data.get("default_currency", "AUD"),
+                    "target_price": float(args.target_price) if args.target_price else None,
+                    "active": True,
+                }
+                routes.append(existing)
+            await process_flight_item(client, existing, agents_md, templates, flight_history_data, now_iso, date_str)
+        else:
+            active_routes = [r for r in routes if r.get("active", True)]
+            if not active_routes:
+                print("No active flight routes in data/flight_watchlist.json. Specify --origin and --destination to search.")
+                return 0
+            for r in active_routes:
+                await process_flight_item(client, r, agents_md, templates, flight_history_data, now_iso, date_str)
+
+        flight_watchlist_data["last_updated"] = now_iso
+        save_json(FLIGHT_WATCHLIST_PATH, flight_watchlist_data)
+        save_json(FLIGHT_HISTORY_PATH, flight_history_data)
+        update_flight_reports_index(routes)
+        update_dashboard_html(watchlist_data, history_data, flight_watchlist_data, flight_history_data, now_iso)
+        print("\n✅ All flight reports, flight watchlist JSON, and interactive HTML dashboard updated.")
+
     else:
-        active_items = [x for x in items if x.get("active", True)]
-        if not active_items:
-            print("No active items in data/watchlist.json. Nothing to query.")
-            return 0
-        for item in active_items:
-            await process_item(client, item, agents_md, templates, sources_md, history_data, now_iso, date_str)
+        # Product Mode
+        items: list[dict[str, Any]] = watchlist_data.setdefault("items", [])
+        if args.product:
+            slug = slugify(args.product)
+            existing = next((x for x in items if x.get("id") == slug), None)
+            if not existing:
+                existing = {
+                    "id": slug,
+                    "name": args.product,
+                    "sku": args.sku or args.product,
+                    "region": args.region or watchlist_data.get("default_region", "AU"),
+                    "currency": args.currency or watchlist_data.get("default_currency", "AUD"),
+                    "target_price": float(args.target_price) if args.target_price else None,
+                    "active": True,
+                }
+                items.append(existing)
+            await process_product_item(client, existing, agents_md, templates, sources_md, history_data, now_iso, date_str)
+        else:
+            active_items = [x for x in items if x.get("active", True)]
+            if not active_items:
+                print("No active items in data/watchlist.json. Nothing to query.")
+                return 0
+            for item in active_items:
+                await process_product_item(client, item, agents_md, templates, sources_md, history_data, now_iso, date_str)
 
-    watchlist_data["last_updated"] = now_iso
-    save_json(WATCHLIST_PATH, watchlist_data)
-    save_json(HISTORY_PATH, history_data)
-    update_reports_index(items)
-    update_dashboard_html(watchlist_data, history_data, now_iso)
-    print("\n✅ All reports, watchlist JSON, and interactive HTML dashboard updated.")
+        watchlist_data["last_updated"] = now_iso
+        save_json(WATCHLIST_PATH, watchlist_data)
+        save_json(HISTORY_PATH, history_data)
+        update_reports_index(items)
+        update_dashboard_html(watchlist_data, history_data, flight_watchlist_data, flight_history_data, now_iso)
+        print("\n✅ All reports, watchlist JSON, and interactive HTML dashboard updated.")
+
     return 0
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="24/7 Cloud Multi-Agent Deep Price Runner")
-    parser.add_argument("--product", help="Ad-hoc product name to research and add to watchlist")
+    parser = argparse.ArgumentParser(description="24/7 Multi-Agent Price & Flight Search Orchestrator")
+    parser.add_argument("--mode", choices=["product", "flight"], default="product", help="Operating mode")
+
+    # Product options
+    parser.add_argument("--product", help="Ad-hoc product name to research")
     parser.add_argument("--sku", help="Optional exact SKU or model number")
     parser.add_argument("--region", default="AU", help="Region code (e.g., AU, US, UK, EU)")
+
+    # Flight options
+    parser.add_argument("--origin", help="Origin airport code or city (e.g., SYD, LHR, JFK)")
+    parser.add_argument("--destination", help="Destination airport code or city (e.g., SEA, DPS, NRT)")
+    parser.add_argument("--depart-date", help="Departure date or month (e.g., 2027-08-01 or August 2027)")
+    parser.add_argument("--return-date", help="Return date or month (e.g., 2027-08-28)")
+    parser.add_argument("--trip-type", choices=["return", "one-way"], default="return", help="Trip type")
+    parser.add_argument("--cabin-class", default="Economy", help="Cabin class (Economy, Premium, Business)")
+    parser.add_argument("--checked-bag", action="store_true", help="Include 1 checked bag (23kg)")
+    parser.add_argument("--max-hops", type=int, default=4, help="Maximum flight combination legs (1-4)")
+
+    # Common options
     parser.add_argument("--currency", default="AUD", help="Currency code (e.g., AUD, USD, GBP, EUR)")
     parser.add_argument("--target-price", dest="target_price", help="Optional target price alert threshold")
     parser.add_argument("--dry-run", action="store_true", help="Verify directive files and templates without calling API")

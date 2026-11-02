@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#0b0f19" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="PriceScout" />
+  <meta name="apple-mobile-web-app-title" content="TravelScout" />
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" type="image/svg+xml" href="./icon.svg" />
   <link rel="apple-touch-icon" href="./icon.svg" />
-  <title>24/7 Price &amp; Deal Scout</title>
+  <title>24/7 Price &amp; Flight Scout</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -28,6 +28,7 @@
       --red: #ef4444;
       --red-bg: rgba(239, 68, 68, 0.14);
       --purple: #a855f7;
+      --purple-bg: rgba(168, 85, 247, 0.15);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body {
@@ -37,7 +38,7 @@
       line-height: 1.45;
       padding: 16px 14px 90px;
     }
-    .container { max-width: 1180px; margin: 0 auto; }
+    .container { max-width: 1220px; margin: 0 auto; }
 
     /* Top App Bar */
     .app-bar {
@@ -46,7 +47,7 @@
       align-items: center;
       gap: 12px;
       padding-bottom: 14px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       border-bottom: 1px solid var(--border);
     }
     .brand { display: flex; align-items: center; gap: 10px; }
@@ -69,6 +70,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s ease;
+      text-decoration: none;
     }
     .btn:hover { border-color: var(--accent); }
     .btn-primary {
@@ -82,9 +84,40 @@
       border-color: #22c55e;
       color: #fff;
     }
+    .btn-sm { padding: 5px 9px; font-size: 0.75rem; border-radius: 7px; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Launch & Research Card */
+    /* Top Mode Switcher Bar */
+    .mode-bar {
+      display: flex;
+      gap: 8px;
+      background: var(--surface);
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .mode-tab {
+      flex: 1;
+      padding: 10px 14px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.92rem;
+      border-radius: 9px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .mode-tab.active {
+      background: var(--surface-2);
+      color: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 2px 10px rgba(56, 189, 248, 0.15);
+    }
+
+    /* Cards */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -106,12 +139,8 @@
 
     .form-grid {
       display: grid;
-      grid-template-columns: 2fr 1.2fr 0.8fr 0.8fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 10px;
-    }
-    @media (max-width: 768px) {
-      .form-grid { grid-template-columns: 1fr 1fr; }
-      .form-grid .full-mobile { grid-column: 1 / -1; }
     }
     .field label {
       display: block;
@@ -136,6 +165,23 @@
       box-shadow: 0 0 0 2px var(--accent-glow);
     }
 
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 5px;
+    }
+    .chip {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--text); }
+
     .action-row {
       display: flex;
       flex-wrap: wrap;
@@ -144,7 +190,7 @@
     }
     .action-row .btn { flex: 1; min-width: 180px; padding: 12px 16px; font-size: 0.92rem; }
 
-    /* Subagent Live Status Tracker */
+    /* Subagent Live Progress Tracker */
     .agent-progress {
       display: none;
       margin-top: 14px;
@@ -156,7 +202,7 @@
     .agent-progress.active { display: block; }
     .agent-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 10px;
       margin-top: 10px;
     }
@@ -204,7 +250,7 @@
     .kpi-value { font-size: 1.35rem; font-weight: 800; margin-top: 3px; }
     .kpi-sub { font-size: 0.75rem; color: var(--accent); margin-top: 2px; }
 
-    /* Stack Toggles */
+    /* Toggles Bar */
     .toggles-bar {
       display: flex;
       flex-wrap: wrap;
@@ -227,7 +273,7 @@
     }
     label.toggle input { accent-color: var(--accent); width: 16px; height: 16px; }
 
-    /* Tables & Mobile Cards */
+    /* Tables */
     .table-wrap { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th, td { padding: 11px 13px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
@@ -238,7 +284,7 @@
       background: rgba(255,255,255,0.02);
     }
     .num { text-align: right; font-variant-numeric: tabular-nums; }
-    .net-price { font-weight: 800; font-size: 0.98rem; color: var(--green); }
+    .net-price { font-weight: 800; font-size: 1.0rem; color: var(--green); }
     .badge {
       display: inline-block;
       padding: 2px 8px;
@@ -249,6 +295,7 @@
     .badge-green { background: var(--green-bg); color: var(--green); }
     .badge-amber { background: var(--amber-bg); color: var(--amber); }
     .badge-red { background: var(--red-bg); color: var(--red); }
+    .badge-purple { background: var(--purple-bg); color: var(--purple); }
     a.btn-link { color: var(--accent); text-decoration: none; font-weight: 600; }
 
     .recipe-box {
@@ -269,14 +316,20 @@
       <div class="brand">
         <img src="./icon.svg" alt="PriceScout Icon" />
         <div>
-          <h1>24/7 Price &amp; Deal Scout</h1>
-          <div class="sub" id="last-updated-label">Multi-Agent Live Price &amp; Deal App</div>
+          <h1>24/7 Price &amp; Flight Scout</h1>
+          <div class="sub" id="last-updated-label">Multi-Agent Live Price &amp; Flight Combiner</div>
         </div>
       </div>
       <div class="top-actions">
         <button id="install-pwa-btn" class="btn btn-primary" style="display:none;">📲 Install App</button>
-        <button id="toggle-settings-btn" class="btn">⚙️ Cloud Setup</button>
+        <button id="toggle-settings-btn" class="btn">⚙️ Setup</button>
       </div>
+    </div>
+
+    <!-- Mode Switcher Tabs -->
+    <div class="mode-bar">
+      <button id="tab-flight-mode" class="mode-tab active">✈️ Multi-Hop Flight Combiner</button>
+      <button id="tab-product-mode" class="mode-tab">🛒 Products &amp; Deals Scout</button>
     </div>
 
     <!-- Cloud & API Settings Drawer (Stored strictly in Phone LocalStorage) -->
@@ -287,7 +340,7 @@
       </div>
       <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
         <div class="field">
-          <label>Gemini API Key (For Instant Live Phone Runs)</label>
+          <label>Gemini API Key (For Live Phone Runs)</label>
           <input type="password" id="cfg-gemini-key" class="input" placeholder="AIzaSy..." />
         </div>
         <div class="field">
@@ -304,7 +357,7 @@
           <input type="text" id="cfg-gh-repo" class="input" placeholder="username/deep-price-agent" />
         </div>
         <div class="field">
-          <label>GitHub Personal Access Token (Optional for Cloud Trigger)</label>
+          <label>GitHub Token (Optional for 24/7 Cloud Trigger)</label>
           <input type="password" id="cfg-gh-token" class="input" placeholder="ghp_... or github_pat_..." />
         </div>
       </div>
@@ -314,173 +367,391 @@
       </div>
     </div>
 
-    <!-- Launch New Product Research Card -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">🔍 Research a Product or Add to 24/7 Watchlist</div>
-        <span style="font-size:0.76rem; color:var(--muted);">Always uses 3 Parallel Subagents</span>
-      </div>
-      <div class="card-body">
-        <div class="form-grid">
-          <div class="field full-mobile">
-            <label>Product / Flight / Hotel Name *</label>
-            <input type="text" id="inp-product" class="input" placeholder="e.g. Sony WH-1000XM5 Black or RTX 5080" />
+    <!-- ============================================================== -->
+    <!-- FLIGHT MODE UI                                                 -->
+    <!-- ============================================================== -->
+    <div id="view-flight-mode">
+      <!-- Flight Search Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✈️ Search Flights &amp; Test 1/2/3/4-Hop Combinations Worldwide</div>
+          <span style="font-size:0.76rem; color:var(--muted);">5 Parallel Subagents + 3h Layover Buffer</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="field">
+              <label>Origin Airport / City *</label>
+              <input type="text" id="fl-origin" class="input" placeholder="e.g. SYD, LHR, JFK" value="SYD" />
+              <div class="chip-row">
+                <span class="chip" onclick="document.getElementById('fl-origin').value='SYD'">SYD</span>
+                <span class="chip" onclick="document.getElementById('fl-origin').value='MEL'">MEL</span>
+                <span class="chip" onclick="document.getElementById('fl-origin').value='BNE'">BNE</span>
+                <span class="chip" onclick="document.getElementById('fl-origin').value='LHR'">LHR</span>
+                <span class="chip" onclick="document.getElementById('fl-origin').value='JFK'">JFK</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Destination Airport / City *</label>
+              <input type="text" id="fl-dest" class="input" placeholder="e.g. SEA, DPS, NRT, LHR" value="SEA" />
+              <div class="chip-row">
+                <span class="chip" onclick="document.getElementById('fl-dest').value='SEA'">SEA</span>
+                <span class="chip" onclick="document.getElementById('fl-dest').value='DPS'">DPS</span>
+                <span class="chip" onclick="document.getElementById('fl-dest').value='NRT'">NRT</span>
+                <span class="chip" onclick="document.getElementById('fl-dest').value='HNL'">HNL</span>
+                <span class="chip" onclick="document.getElementById('fl-dest').value='LHR'">LHR</span>
+              </div>
+            </div>
+            <div class="field">
+              <label>Depart Date / Month</label>
+              <input type="text" id="fl-depart-date" class="input" placeholder="e.g. August 2027 or 2027-08-01" value="August 2027" />
+            </div>
+            <div class="field">
+              <label>Return Date / Month</label>
+              <input type="text" id="fl-return-date" class="input" placeholder="e.g. August 2027 or 2027-08-28" value="August 2027" />
+            </div>
+            <div class="field">
+              <label>Trip Type</label>
+              <select id="fl-trip-type" class="select">
+                <option value="return">Return Trip</option>
+                <option value="one-way">One-Way</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Cabin Class</label>
+              <select id="fl-cabin" class="select">
+                <option value="Economy">Economy</option>
+                <option value="Premium Economy">Premium Economy</option>
+                <option value="Business">Business</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Combiner Depth</label>
+              <select id="fl-depth" class="select">
+                <option value="hacker">Max Hacker (Direct, 2, 3 &amp; 4 Hops via Hubs)</option>
+                <option value="explorer">Explorer (Direct &amp; 2–3 Hops)</option>
+                <option value="standard">Standard (Direct &amp; 1-Stop Alliance)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Currency</label>
+              <select id="fl-currency" class="select">
+                <option value="AUD">AUD ($)</option>
+                <option value="USD">USD ($)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="BRL">BRL (R$)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Target Return Fare</label>
+              <input type="number" id="fl-target" class="input" placeholder="e.g. 1400" />
+            </div>
           </div>
-          <div class="field full-mobile">
-            <label>Exact SKU / Variant / Notes</label>
-            <input type="text" id="inp-sku" class="input" placeholder="e.g. Brand New Sealed, 256GB" />
+
+          <div class="action-row">
+            <button id="run-flight-live-btn" class="btn btn-primary">
+              ⚡ Run 5 Flight Subagents Live Now (~45s)
+            </button>
+            <button id="send-flight-cloud-btn" class="btn btn-green">
+              ☁️ Send to 24/7 Cloud Flight Watch (GitHub)
+            </button>
           </div>
-          <div class="field">
-            <label>Region</label>
-            <select id="inp-region" class="select">
-              <option value="AU">AU (Australia)</option>
-              <option value="US">US (United States)</option>
-              <option value="UK">UK (United Kingdom)</option>
-              <option value="EU">EU (Europe)</option>
-              <option value="JP">JP (Japan)</option>
-              <option value="BR">BR (Brazil)</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Currency</label>
-            <select id="inp-currency" class="select">
-              <option value="AUD">AUD ($)</option>
-              <option value="USD">USD ($)</option>
-              <option value="GBP">GBP (£)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="JPY">JPY (¥)</option>
-              <option value="BRL">BRL (R$)</option>
-            </select>
-          </div>
-          <div class="field full-mobile">
-            <label>Target Buy Price</label>
-            <input type="number" id="inp-target" class="input" placeholder="e.g. 399" step="any" />
+
+          <!-- Live 5-Subagent Status Tracker -->
+          <div id="flight-agent-progress" class="agent-progress">
+            <div style="font-size:0.85rem; font-weight:600;" id="fl-progress-headline">
+              Mapping departure gateways and testing multi-flight combinations...
+            </div>
+            <div class="agent-grid">
+              <div class="agent-pill" id="st-fl-mapper">
+                <span>1. <code>departure-hub-mapper</code> (Outbound Gateways)</span>
+                <strong id="st-fl-mapper-badge">Idle</strong>
+              </div>
+              <div class="agent-pill" id="st-fl-a">
+                <span>2. <code>corridor-a-scout</code> (Direct &amp; Standard Gateways)</span>
+                <strong id="st-fl-a-badge">Idle</strong>
+              </div>
+              <div class="agent-pill" id="st-fl-b">
+                <span>3. <code>corridor-b-scout</code> (Continental Mega-Hubs)</span>
+                <strong id="st-fl-b-badge">Idle</strong>
+              </div>
+              <div class="agent-pill" id="st-fl-c">
+                <span>4. <code>corridor-c-scout</code> (Low-Cost &amp; 2/3/4 Hops)</span>
+                <strong id="st-fl-c-badge">Idle</strong>
+              </div>
+              <div class="agent-pill" id="st-fl-stitcher">
+                <span>5. <code>hacker-stitcher</code> (3h Buffer &amp; Deep Links)</span>
+                <strong id="st-fl-stitcher-badge">Idle</strong>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="action-row">
-          <button id="run-live-btn" class="btn btn-primary">
-            ⚡ Run 3 Subagents Live Now (30s)
-          </button>
-          <button id="send-cloud-btn" class="btn btn-green">
-            ☁️ Send to 24/7 Cloud Watchlist (GitHub)
-          </button>
-        </div>
+        <div id="flight-recipe-box" class="recipe-box" style="display:none;"></div>
+      </div>
 
-        <!-- Live Subagent Status Indicator -->
-        <div id="agent-progress" class="agent-progress">
-          <div style="font-size:0.85rem; font-weight:600;" id="progress-headline">
-            Dispatching parallel subagents with Google Search Grounding...
-          </div>
-          <div class="agent-grid">
-            <div class="agent-pill" id="st-scout">
-              <span>1. <code>price-scout</code> (Live Retailers &amp; Stock)</span>
-              <strong id="st-scout-badge">Idle</strong>
-            </div>
-            <div class="agent-pill" id="st-deal">
-              <span>2. <code>deal-hunter</code> (Coupons &amp; Cashback)</span>
-              <strong id="st-deal-badge">Idle</strong>
-            </div>
-            <div class="agent-pill" id="st-trust">
-              <span>3. <code>trust-auditor</code> (History &amp; Fake Sales)</span>
-              <strong id="st-trust-badge">Idle</strong>
-            </div>
-            <div class="agent-pill" id="st-synth">
-              <span>4. Lead Net-Price Synthesizer</span>
-              <strong id="st-synth-badge">Idle</strong>
-            </div>
-          </div>
+      <!-- Flight KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Monitored Routes</div>
+          <div class="kpi-value" id="kpi-fl-routes">0</div>
+          <div class="kpi-sub">Tracked 24/7</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Route Combinations</div>
+          <div class="kpi-value" id="kpi-fl-combos">0</div>
+          <div class="kpi-sub">Tested Options</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Luggage Mode</div>
+          <div class="kpi-value" id="kpi-fl-luggage">Carry-On</div>
+          <div class="kpi-sub">Toggleable below</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Safety Layover</div>
+          <div class="kpi-value" id="kpi-fl-buffer">&ge; 3.0h Buffer</div>
+          <div class="kpi-sub">Safe self-transfers</div>
         </div>
       </div>
 
-      <div id="latest-recipe-box" class="recipe-box" style="display:none;"></div>
+      <!-- Flight Toggles Bar -->
+      <div class="toggles-bar">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; flex:1;">
+          <input type="text" id="fl-filter" class="input" style="max-width:240px;" placeholder="Filter city or airline..." />
+          <select id="fl-route-filter" class="select" style="max-width:220px;">
+            <option value="ALL">All Routes</option>
+          </select>
+        </div>
+        <div class="toggle-group">
+          <label class="toggle"><input type="checkbox" id="toggle-checked-bag" /> 🧳 +1 Checked Bag (23kg)</label>
+          <label class="toggle"><input type="checkbox" id="toggle-safety-buffer" checked /> ⏱️ 3h+ Safety Layover Buffer</label>
+          <label class="toggle"><input type="checkbox" id="toggle-pos-arb" checked /> 💱 Currency Arbitrage</label>
+        </div>
+      </div>
+
+      <!-- Flight Results Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏆 Discovered Flight Combinations (Ranked by True Net Fare)</div>
+          <span style="font-size:0.76rem; color:var(--muted);">Skyscanner • Google Flights • Kayak</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Route Overview</th>
+                <th>Hops</th>
+                <th>Airlines</th>
+                <th>Duration &amp; Layovers</th>
+                <th>Ticket Type</th>
+                <th class="num">Landed Fare</th>
+                <th>Engines</th>
+                <th>1-Click Search Links</th>
+              </tr>
+            </thead>
+            <tbody id="flight-offers-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Flight Watchlist Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📌 24/7 Monitored Flight Routes</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Route</th>
+                <th>Dates</th>
+                <th>Type</th>
+                <th class="num">Target</th>
+                <th class="num">Best Fare</th>
+                <th>Best Combination</th>
+                <th>Status</th>
+                <th>Last Checked</th>
+              </tr>
+            </thead>
+            <tbody id="flight-watchlist-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <!-- KPI Summary -->
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Watchlist Items</div>
-        <div class="kpi-value" id="kpi-watchlist-count">0</div>
-        <div class="kpi-sub">Cloud + Phone Synced</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Verified Offers</div>
-        <div class="kpi-value" id="kpi-offers-count">0</div>
-        <div class="kpi-sub">Live Grounded Prices</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Target Alerts Hit</div>
-        <div class="kpi-value" id="kpi-alerts-count">0</div>
-        <div class="kpi-sub">Net &le; Target Price</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Calculator Mode</div>
-        <div class="kpi-value" id="kpi-stack-mode">Full Stack</div>
-        <div class="kpi-sub">Interactive below</div>
-      </div>
-    </div>
+    <!-- ============================================================== -->
+    <!-- PRODUCT MODE UI                                                -->
+    <!-- ============================================================== -->
+    <div id="view-product-mode" style="display:none;">
+      <!-- Launch New Product Research Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔍 Research a Product or Add to 24/7 Watchlist</div>
+          <span style="font-size:0.76rem; color:var(--muted);">Always uses 3 Parallel Subagents</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="field" style="grid-column: span 2;">
+              <label>Product Name *</label>
+              <input type="text" id="inp-product" class="input" placeholder="e.g. Sony WH-1000XM5 Black or RTX 5080" />
+            </div>
+            <div class="field" style="grid-column: span 2;">
+              <label>Exact SKU / Variant / Notes</label>
+              <input type="text" id="inp-sku" class="input" placeholder="e.g. Brand New Sealed, 256GB" />
+            </div>
+            <div class="field">
+              <label>Region</label>
+              <select id="inp-region" class="select">
+                <option value="AU">AU (Australia)</option>
+                <option value="US">US (United States)</option>
+                <option value="UK">UK (United Kingdom)</option>
+                <option value="EU">EU (Europe)</option>
+                <option value="JP">JP (Japan)</option>
+                <option value="BR">BR (Brazil)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Currency</label>
+              <select id="inp-currency" class="select">
+                <option value="AUD">AUD ($)</option>
+                <option value="USD">USD ($)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="BRL">BRL (R$)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Target Buy Price</label>
+              <input type="number" id="inp-target" class="input" placeholder="e.g. 399" step="any" />
+            </div>
+          </div>
 
-    <!-- Interactive Net Price Toggles -->
-    <div class="toggles-bar">
-      <div style="display:flex; gap:8px; flex-wrap:wrap; flex:1;">
-        <input type="text" id="search-filter" class="input" style="max-width:220px;" placeholder="Filter store or item..." />
-        <select id="product-filter" class="select" style="max-width:220px;">
-          <option value="ALL">All Products</option>
-        </select>
-      </div>
-      <div class="toggle-group">
-        <label class="toggle"><input type="checkbox" id="toggle-shipping" checked /> +Shipping/Tax</label>
-        <label class="toggle"><input type="checkbox" id="toggle-promo" checked /> -Promo/Price-Beat</label>
-        <label class="toggle"><input type="checkbox" id="toggle-cashback" checked /> -Cashback/GC</label>
-      </div>
-    </div>
+          <div class="action-row">
+            <button id="run-live-btn" class="btn btn-primary">
+              ⚡ Run 3 Subagents Live Now (30s)
+            </button>
+            <button id="send-cloud-btn" class="btn btn-green">
+              ☁️ Send to 24/7 Cloud Watchlist (GitHub)
+            </button>
+          </div>
 
-    <!-- Active Watchlist Table -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">📌 24/7 Watchlist &amp; Best Net Prices</div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Region</th>
-              <th class="num">Target</th>
-              <th class="num">Best Net Price</th>
-              <th>Best Store</th>
-              <th>Verdict / Status</th>
-              <th>Checked</th>
-            </tr>
-          </thead>
-          <tbody id="watchlist-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+          <!-- Live Product Subagent Status Indicator -->
+          <div id="agent-progress" class="agent-progress">
+            <div style="font-size:0.85rem; font-weight:600;" id="progress-headline">
+              Dispatching parallel subagents with Google Search Grounding...
+            </div>
+            <div class="agent-grid">
+              <div class="agent-pill" id="st-scout">
+                <span>1. <code>price-scout</code> (Live Retailers &amp; Stock)</span>
+                <strong id="st-scout-badge">Idle</strong>
+              </div>
+              <div class="agent-pill" id="st-deal">
+                <span>2. <code>deal-hunter</code> (Coupons &amp; Cashback)</span>
+                <strong id="st-deal-badge">Idle</strong>
+              </div>
+              <div class="agent-pill" id="st-trust">
+                <span>3. <code>trust-auditor</code> (History &amp; Fake Sales)</span>
+                <strong id="st-trust-badge">Idle</strong>
+              </div>
+              <div class="agent-pill" id="st-synth">
+                <span>4. Lead Net-Price Synthesizer</span>
+                <strong id="st-synth-badge">Idle</strong>
+              </div>
+            </div>
+          </div>
+        </div>
 
-    <!-- Live Retailer Offers Table -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-title">🏆 Live Retailer Comparison (Ranked by True Net Landed Price)</div>
+        <div id="latest-recipe-box" class="recipe-box" style="display:none;"></div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Retailer</th>
-              <th>Trust</th>
-              <th class="num">Sticker</th>
-              <th class="num">Ship/Tax</th>
-              <th class="num">Promo/Beat</th>
-              <th class="num">Cashback/GC</th>
-              <th class="num">True Net Price</th>
-              <th>Stock</th>
-              <th>Deal Stack &amp; Link</th>
-            </tr>
-          </thead>
-          <tbody id="offers-tbody"></tbody>
-        </table>
+
+      <!-- Product KPI Summary -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Watchlist Items</div>
+          <div class="kpi-value" id="kpi-watchlist-count">0</div>
+          <div class="kpi-sub">Cloud + Phone Synced</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Verified Offers</div>
+          <div class="kpi-value" id="kpi-offers-count">0</div>
+          <div class="kpi-sub">Live Grounded Prices</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Target Alerts Hit</div>
+          <div class="kpi-value" id="kpi-alerts-count">0</div>
+          <div class="kpi-sub">Net &le; Target Price</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Calculator Mode</div>
+          <div class="kpi-value" id="kpi-stack-mode">Full Stack</div>
+          <div class="kpi-sub">Interactive below</div>
+        </div>
+      </div>
+
+      <!-- Product Interactive Net Price Toggles -->
+      <div class="toggles-bar">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; flex:1;">
+          <input type="text" id="search-filter" class="input" style="max-width:220px;" placeholder="Filter store or item..." />
+          <select id="product-filter" class="select" style="max-width:220px;">
+            <option value="ALL">All Products</option>
+          </select>
+        </div>
+        <div class="toggle-group">
+          <label class="toggle"><input type="checkbox" id="toggle-shipping" checked /> +Shipping/Tax</label>
+          <label class="toggle"><input type="checkbox" id="toggle-promo" checked /> -Promo/Price-Beat</label>
+          <label class="toggle"><input type="checkbox" id="toggle-cashback" checked /> -Cashback/GC</label>
+        </div>
+      </div>
+
+      <!-- Active Product Watchlist Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📌 24/7 Product Watchlist &amp; Best Net Prices</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Region</th>
+                <th class="num">Target</th>
+                <th class="num">Best Net Price</th>
+                <th>Best Store</th>
+                <th>Verdict / Status</th>
+                <th>Checked</th>
+              </tr>
+            </thead>
+            <tbody id="watchlist-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Retailer Offers Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🏆 Live Retailer Comparison (Ranked by True Net Landed Price)</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Retailer</th>
+                <th>Trust</th>
+                <th class="num">Sticker</th>
+                <th class="num">Ship/Tax</th>
+                <th class="num">Promo/Beat</th>
+                <th class="num">Cashback/GC</th>
+                <th class="num">True Net Price</th>
+                <th>Stock</th>
+                <th>Deal Stack &amp; Link</th>
+              </tr>
+            </thead>
+            <tbody id="offers-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -488,16 +759,18 @@
   <!-- BEGIN_AGENT_DATA -->
   <script>
     window.PRICE_AGENT_DATA = {
-      "last_updated": "2026-10-28T18:06:00+11:00",
+      "last_updated": "2026-11-02T17:50:00+11:00",
       "watchlist": [],
-      "offers": []
+      "offers": [],
+      "flight_watchlist": [],
+      "flight_offers": []
     };
   </script>
   <!-- END_AGENT_DATA -->
 
   <script>
     (function () {
-      // 1. Register PWA Service Worker & Install Prompt
+      // 1. PWA Service Worker
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(() => {});
       }
@@ -516,7 +789,7 @@
         installBtn.style.display = 'none';
       });
 
-      // 2. Settings Management (Device-local storage)
+      // 2. Settings Management
       const settingsDrawer = document.getElementById('settings-drawer');
       const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
       const cfgGeminiKey = document.getElementById('cfg-gemini-key');
@@ -531,14 +804,10 @@
       cfgGhRepo.value = localStorage.getItem('ps_gh_repo') || 'webrs-svg/deep-price-agent';
       cfgGhToken.value = localStorage.getItem('ps_gh_token') || '';
 
-      toggleSettingsBtn.addEventListener('click', () => {
-        settingsDrawer.classList.toggle('open');
-      });
+      toggleSettingsBtn.addEventListener('click', () => settingsDrawer.classList.toggle('open'));
       document.getElementById('save-settings-btn').addEventListener('click', () => {
         localStorage.setItem('ps_gemini_key', cfgGeminiKey.value.trim());
-        if (cfgGeminiModel) {
-          localStorage.setItem('ps_gemini_model', cfgGeminiModel.value);
-        }
+        if (cfgGeminiModel) localStorage.setItem('ps_gemini_model', cfgGeminiModel.value);
         localStorage.setItem('ps_gh_repo', cfgGhRepo.value.trim());
         localStorage.setItem('ps_gh_token', cfgGhToken.value.trim());
         settingsDrawer.classList.remove('open');
@@ -547,25 +816,99 @@
       document.getElementById('clear-local-btn').addEventListener('click', () => {
         localStorage.removeItem('ps_local_watchlist');
         localStorage.removeItem('ps_local_offers');
+        localStorage.removeItem('ps_local_flight_watchlist');
+        localStorage.removeItem('ps_local_flight_offers');
         location.reload();
       });
 
-      // 3. Merge Cloud Embedded Data + Device Local Runs
-      const baseData = window.PRICE_AGENT_DATA || { watchlist: [], offers: [] };
+      // 3. Mode Switcher (Flight vs Product)
+      const tabFlight = document.getElementById('tab-flight-mode');
+      const tabProduct = document.getElementById('tab-product-mode');
+      const viewFlight = document.getElementById('view-flight-mode');
+      const viewProduct = document.getElementById('view-product-mode');
+
+      function switchMode(mode) {
+        if (mode === 'flight') {
+          tabFlight.classList.add('active');
+          tabProduct.classList.remove('active');
+          viewFlight.style.display = 'block';
+          viewProduct.style.display = 'none';
+          localStorage.setItem('ps_active_mode', 'flight');
+        } else {
+          tabProduct.classList.add('active');
+          tabFlight.classList.remove('active');
+          viewProduct.style.display = 'block';
+          viewFlight.style.display = 'none';
+          localStorage.setItem('ps_active_mode', 'product');
+        }
+        render();
+      }
+      tabFlight.addEventListener('click', () => switchMode('flight'));
+      tabProduct.addEventListener('click', () => switchMode('product'));
+
+      // 4. Data merging
+      const baseData = window.PRICE_AGENT_DATA || { watchlist: [], offers: [], flight_watchlist: [], flight_offers: [] };
       function getMergedData() {
         const localWatch = JSON.parse(localStorage.getItem('ps_local_watchlist') || '[]');
         const localOffers = JSON.parse(localStorage.getItem('ps_local_offers') || '[]');
+        const localFlightWatch = JSON.parse(localStorage.getItem('ps_local_flight_watchlist') || '[]');
+        const localFlightOffers = JSON.parse(localStorage.getItem('ps_local_flight_offers') || '[]');
+
         const mapW = new Map();
         (baseData.watchlist || []).forEach(w => mapW.set(w.name, w));
         localWatch.forEach(w => mapW.set(w.name, w));
+
+        const mapFW = new Map();
+        (baseData.flight_watchlist || []).forEach(f => mapFW.set(`${f.origin}-${f.destination}`, f));
+        localFlightWatch.forEach(f => mapFW.set(`${f.origin}-${f.destination}`, f));
+
         return {
           last_updated: baseData.last_updated,
           watchlist: Array.from(mapW.values()),
-          offers: [...localOffers, ...(baseData.offers || [])]
+          offers: [...localOffers, ...(baseData.offers || [])],
+          flight_watchlist: Array.from(mapFW.values()),
+          flight_offers: [...localFlightOffers, ...(baseData.flight_offers || [])],
         };
       }
 
-      // 4. UI Elements
+      function fmt(amount, currency) {
+        if (amount === null || amount === undefined || isNaN(amount)) return '—';
+        return (currency || 'AUD') + ' ' + Number(amount).toFixed(2);
+      }
+
+      // Deep search link generators
+      function buildSkyscannerUrl(origin, dest, depDate, retDate) {
+        const o = (origin || '').toLowerCase().trim();
+        const d = (dest || '').toLowerCase().trim();
+        const dep = (depDate || '').replace(/\D/g, '').slice(2, 8);
+        const ret = (retDate || '').replace(/\D/g, '').slice(2, 8);
+        if (dep && ret) return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/${dep}/${ret}/`;
+        if (dep) return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/${dep}/`;
+        return `https://www.skyscanner.com.au/transport/flights/${o}/${d}/`;
+      }
+      function buildGoogleFlightsUrl(origin, dest, depDate, retDate) {
+        let q = `Flights to ${dest} from ${origin}`;
+        if (depDate) q += ` on ${depDate}`;
+        if (retDate) q += ` returning ${retDate}`;
+        return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
+      }
+      function buildKayakUrl(origin, dest, depDate, retDate) {
+        const o = (origin || '').toUpperCase().trim();
+        const d = (dest || '').toUpperCase().trim();
+        if (depDate && retDate) return `https://www.kayak.com.au/flights/${o}-${d}/${depDate}/${retDate}`;
+        if (depDate) return `https://www.kayak.com.au/flights/${o}-${d}/${depDate}`;
+        return `https://www.kayak.com.au/flights/${o}-${d}`;
+      }
+
+      // 5. Render Functions
+      const flOffersTbody = document.getElementById('flight-offers-tbody');
+      const flWatchTbody = document.getElementById('flight-watchlist-tbody');
+      const flFilterInput = document.getElementById('fl-filter');
+      const flRouteFilter = document.getElementById('fl-route-filter');
+      const toggleCheckedBag = document.getElementById('toggle-checked-bag');
+      const toggleSafetyBuffer = document.getElementById('toggle-safety-buffer');
+
+      // Product UI elements
       const searchInput = document.getElementById('search-filter');
       const productSelect = document.getElementById('product-filter');
       const toggleShipping = document.getElementById('toggle-shipping');
@@ -573,11 +916,6 @@
       const toggleCashback = document.getElementById('toggle-cashback');
       const watchlistTbody = document.getElementById('watchlist-tbody');
       const offersTbody = document.getElementById('offers-tbody');
-
-      function fmt(amount, currency) {
-        if (amount === null || amount === undefined || isNaN(amount)) return '—';
-        return (currency || 'AUD') + ' ' + Number(amount).toFixed(2);
-      }
 
       function computeDynamicPrice(offer) {
         let price = Number(offer.base_price || 0);
@@ -587,14 +925,115 @@
         return Math.max(0, price);
       }
 
+      function computeDynamicFlightFare(flight) {
+        let fare = Number(flight.base_fare || flight.net_fare || 0);
+        if (toggleCheckedBag.checked) {
+          fare += Number(flight.checked_bag_fee || 70);
+        }
+        return Math.max(0, fare);
+      }
+
       function render() {
         const state = getMergedData();
+
+        // A. Render Flight View
+        const flQ = (flFilterInput.value || '').toLowerCase();
+        const selRoute = flRouteFilter.value;
+
+        // Populate route filter dropdown
+        const routes = Array.from(new Set((state.flight_offers || []).map(f => `${f.origin} ➔ ${f.destination}`).filter(Boolean)));
+        flRouteFilter.innerHTML = '<option value="ALL">All Routes</option>';
+        routes.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r;
+          opt.textContent = r;
+          flRouteFilter.appendChild(opt);
+        });
+        if (routes.includes(selRoute)) flRouteFilter.value = selRoute;
+
+        document.getElementById('kpi-fl-routes').textContent = state.flight_watchlist.length;
+        document.getElementById('kpi-fl-combos').textContent = state.flight_offers.length;
+        document.getElementById('kpi-fl-luggage').textContent = toggleCheckedBag.checked ? '+1 Checked Bag' : 'Carry-On Only';
+
+        if (state.flight_watchlist.length === 0) {
+          flWatchTbody.innerHTML = '<tr><td colspan="8" class="empty-state">No flight routes tracked yet. Enter an Origin &amp; Destination above and tap <strong>⚡ Run 5 Flight Subagents Live Now</strong>!</td></tr>';
+        } else {
+          flWatchTbody.innerHTML = state.flight_watchlist.map(f => {
+            const hit = f.best_net_fare && f.target_price && f.best_net_fare <= f.target_price;
+            const badge = hit
+              ? '<span class="badge badge-green">🔥 TARGET HIT</span>'
+              : `<span class="badge badge-amber">${f.verdict || 'WATCHING'}</span>`;
+            return `<tr>
+              <td><strong>${f.origin} ➔ ${f.destination}</strong></td>
+              <td>${f.depart_date || '—'}</td>
+              <td>${f.trip_type || 'return'}</td>
+              <td class="num">${fmt(f.target_price, f.currency)}</td>
+              <td class="num net-price">${fmt(f.best_net_fare, f.currency)}</td>
+              <td><div style="font-size:0.8rem; font-weight:600;">${f.best_route_summary || '—'}</div></td>
+              <td>${badge}</td>
+              <td style="font-size:0.75rem; color:var(--muted);">${f.last_checked || '—'}</td>
+            </tr>`;
+          }).join('');
+        }
+
+        const filteredFlights = (state.flight_offers || [])
+          .filter(f => selRoute === 'ALL' || `${f.origin} ➔ ${f.destination}` === selRoute)
+          .filter(f => {
+            if (!flQ) return true;
+            return (f.route_summary || '').toLowerCase().includes(flQ) ||
+                   (f.airlines || '').toLowerCase().includes(flQ) ||
+                   (f.layovers_summary || '').toLowerCase().includes(flQ);
+          })
+          .filter(f => !toggleSafetyBuffer.checked || f.safety_buffer_met !== false)
+          .map(f => ({ ...f, dynamic_fare: computeDynamicFlightFare(f) }))
+          .sort((a, b) => a.dynamic_fare - b.dynamic_fare);
+
+        if (filteredFlights.length === 0) {
+          flOffersTbody.innerHTML = '<tr><td colspan="8" class="empty-state">No flight combinations found matching filters. Run a search above!</td></tr>';
+        } else {
+          flOffersTbody.innerHTML = filteredFlights.map(f => {
+            const isSingle = (f.ticket_type || '').toLowerCase().includes('single');
+            const ticketBadge = isSingle
+              ? '<span class="badge badge-green">Single Ticket (Protected)</span>'
+              : '<span class="badge badge-purple">Self-Transfer (Hacker Fare)</span>';
+
+            const safeBadge = f.safety_buffer_met !== false
+              ? '<span class="badge badge-green" style="margin-left:4px;">&ge; 3.0h Safe</span>'
+              : '<span class="badge badge-red" style="margin-left:4px;">Tight Layover!</span>';
+
+            const skyUrl = f.skyscanner_url || buildSkyscannerUrl(f.origin, f.destination, f.depart_date, f.return_date);
+            const googUrl = f.google_flights_url || buildGoogleFlightsUrl(f.origin, f.destination, f.depart_date, f.return_date);
+            const kayakUrl = f.kayak_url || buildKayakUrl(f.origin, f.destination, f.depart_date, f.return_date);
+
+            return `<tr>
+              <td>
+                <strong style="color:var(--text); font-size:0.92rem;">${f.route_summary || `${f.origin} ➔ ${f.destination}`}</strong>
+                ${f.visa_warnings ? `<div style="font-size:0.75rem; color:var(--amber); margin-top:2px;">⚠️ ${f.visa_warnings}</div>` : ''}
+              </td>
+              <td><span class="badge badge-purple">${f.hops || 1} ${Number(f.hops) === 1 ? 'Direct' : 'Flights'}</span></td>
+              <td><strong>${f.airlines || '—'}</strong></td>
+              <td>
+                <div>${f.duration_hours ? `${f.duration_hours}h total` : '—'}</div>
+                <div style="font-size:0.75rem; color:var(--muted);">${f.layovers_summary || 'Direct non-stop'} ${safeBadge}</div>
+              </td>
+              <td>${ticketBadge}</td>
+              <td class="num net-price">${fmt(f.dynamic_fare, f.currency)}</td>
+              <td style="font-size:0.78rem;">${f.cheapest_engine || 'Skyscanner'}</td>
+              <td>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <a class="btn btn-sm btn-primary" href="${skyUrl}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
+                  <a class="btn btn-sm" href="${googUrl}" target="_blank" rel="noopener">Google Flights &rarr;</a>
+                  <a class="btn btn-sm" href="${kayakUrl}" target="_blank" rel="noopener">Kayak &rarr;</a>
+                </div>
+              </td>
+            </tr>`;
+          }).join('');
+        }
+
+        // B. Render Product View
         const q = (searchInput.value || '').toLowerCase();
         const selectedProd = productSelect.value;
-
-        // Refresh product dropdown options
         const products = Array.from(new Set((state.offers || []).map(o => o.product_name).filter(Boolean)));
-        const currentVal = productSelect.value;
         productSelect.innerHTML = '<option value="ALL">All Products</option>';
         products.forEach(p => {
           const opt = document.createElement('option');
@@ -602,7 +1041,7 @@
           opt.textContent = p;
           productSelect.appendChild(opt);
         });
-        if (products.includes(currentVal)) productSelect.value = currentVal;
+        if (products.includes(selectedProd)) productSelect.value = selectedProd;
 
         document.getElementById('kpi-watchlist-count').textContent = state.watchlist.length;
         document.getElementById('kpi-offers-count').textContent = state.offers.length;
@@ -610,16 +1049,8 @@
           w => w.best_recorded_price && w.target_price && w.best_recorded_price <= w.target_price
         ).length;
 
-        const flags = [
-          toggleShipping.checked ? '+Ship' : null,
-          togglePromo.checked ? '-Promo' : null,
-          toggleCashback.checked ? '-Cashback' : null
-        ].filter(Boolean);
-        document.getElementById('kpi-stack-mode').textContent =
-          flags.length === 3 ? 'Full Stack' : (flags.join(' ') || 'Sticker');
-
         if (state.watchlist.length === 0) {
-          watchlistTbody.innerHTML = '<tr><td colspan="7" class="empty-state">No products tracked yet. Type a product above and tap <strong>⚡ Run 3 Subagents Live Now</strong> or <strong>☁️ Send to 24/7 Cloud Watchlist</strong>!</td></tr>';
+          watchlistTbody.innerHTML = '<tr><td colspan="7" class="empty-state">No products tracked yet. Type a product name and tap <strong>⚡ Run 3 Subagents Live Now</strong>!</td></tr>';
         } else {
           watchlistTbody.innerHTML = state.watchlist.map(item => {
             const hit = item.best_recorded_price && item.target_price && item.best_recorded_price <= item.target_price;
@@ -645,7 +1076,7 @@
           .sort((a, b) => a.dynamic_net - b.dynamic_net);
 
         if (filteredOffers.length === 0) {
-          offersTbody.innerHTML = '<tr><td colspan="10" class="empty-state">No live retailer offers yet. Run a search above!</td></tr>';
+          offersTbody.innerHTML = '<tr><td colspan="10" class="empty-state">No live retailer offers yet. Run a search!</td></tr>';
         } else {
           offersTbody.innerHTML = filteredOffers.map(o => {
             const tClass = (o.trust_tier || '').toLowerCase().includes('grey') ? 'badge-red' : 'badge-green';
@@ -668,12 +1099,19 @@
         }
       }
 
+      // Event listeners for flight toggles
+      [flFilterInput, flRouteFilter, toggleCheckedBag, toggleSafetyBuffer].forEach(el => {
+        el.addEventListener('input', render);
+        el.addEventListener('change', render);
+      });
+
+      // Event listeners for product toggles
       [searchInput, productSelect, toggleShipping, togglePromo, toggleCashback].forEach(el => {
         el.addEventListener('input', render);
         el.addEventListener('change', render);
       });
 
-      // 5. Instant Live 3-Subagent Execution Directly from Phone Browser
+      // 6. Gemini API Execution Functions (Free-Tier Fallback Chain)
       const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
       async function callGeminiSingleAttempt(apiKey, modelName, prompt, jsonMode, useGrounding) {
@@ -705,7 +1143,6 @@
         const parts = (cand && cand.content && cand.content.parts) || [];
         let text = parts.map(p => p.text || '').join('\n');
 
-        // Append verified Google Search grounding URLs when in subagent search mode
         if (!jsonMode && cand && cand.groundingMetadata && cand.groundingMetadata.groundingChunks) {
           const links = cand.groundingMetadata.groundingChunks
             .map(c => c.web && c.web.uri ? `- [${c.web.title || c.web.uri}](${c.web.uri})` : null)
@@ -719,11 +1156,6 @@
 
       async function callGeminiGrounded(apiKey, prompt, jsonMode = false) {
         const pref = localStorage.getItem('ps_gemini_model') || 'auto';
-        // Build fallback chain:
-        // Note: On the unpaid Free Tier, Gemini 3.x models have 0 free quota for Google Search grounding (limit: 0),
-        // whereas gemini-2.5-flash includes 500 RPD free Google Search grounding!
-        // So in 'auto' or fallback mode, we try the preferred model with grounding, fall back to gemini-2.5-flash with grounding,
-        // and if all grounded quotas are exhausted, fall back to gemini-3.8-flash / gemini-3.5-flash-lite without grounding tool.
         const attempts = [];
         if (jsonMode) {
           const primary = pref === 'auto' ? 'gemini-3.8-flash' : pref;
@@ -731,9 +1163,7 @@
           if (primary !== 'gemini-3.8-flash') attempts.push({ model: 'gemini-3.8-flash', ground: false });
           if (primary !== 'gemini-3.5-flash-lite') attempts.push({ model: 'gemini-3.5-flash-lite', ground: false });
         } else {
-          if (pref !== 'auto') {
-            attempts.push({ model: pref, ground: true });
-          }
+          if (pref !== 'auto') attempts.push({ model: pref, ground: true });
           attempts.push(
             { model: 'gemini-3.8-flash', ground: true },
             { model: 'gemini-2.5-flash', ground: true },
@@ -743,7 +1173,6 @@
           );
         }
 
-        // Deduplicate attempts
         const seen = new Set();
         const uniqueAttempts = attempts.filter(a => {
           const k = `${a.model}:${a.ground}`;
@@ -761,13 +1190,8 @@
             lastErr = err;
             const msg = String(err.rawText || err.message || '');
             const isQuotaOrNotFound = err.status === 429 || err.status === 404 || err.status === 400 || err.status === 503 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota');
-            if (!isQuotaOrNotFound) {
-              throw err;
-            }
-            // If it's a rate limit (RPM) rather than a 0-quota restriction, wait briefly before next fallback
-            if (err.status === 429 && !msg.includes('limit: 0')) {
-              await sleep(1500);
-            }
+            if (!isQuotaOrNotFound) throw err;
+            if (err.status === 429 && !msg.includes('limit: 0')) await sleep(1500);
           }
         }
         throw lastErr;
@@ -781,16 +1205,232 @@
       function setPillState(id, badgeId, state, label) {
         const el = document.getElementById(id);
         const b = document.getElementById(badgeId);
-        el.className = 'agent-pill ' + (state || '');
-        b.textContent = label;
+        if (el && b) {
+          el.className = 'agent-pill ' + (state || '');
+          b.textContent = label;
+        }
       }
 
+      // 7. Live Flight Search Button Click
+      document.getElementById('run-flight-live-btn').addEventListener('click', async () => {
+        const apiKey = localStorage.getItem('ps_gemini_key');
+        if (!apiKey) {
+          settingsDrawer.classList.add('open');
+          cfgGeminiKey.focus();
+          alert('Please paste your Google AI Studio Gemini API Key once in ⚙️ Setup so your phone can run the subagents!');
+          return;
+        }
+        const origin = document.getElementById('fl-origin').value.trim().toUpperCase();
+        const dest = document.getElementById('fl-dest').value.trim().toUpperCase();
+        if (!origin || !dest) {
+          alert('Please enter an Origin and Destination airport code or city.');
+          return;
+        }
+        const departDate = document.getElementById('fl-depart-date').value.trim() || 'August 2027';
+        const returnDate = document.getElementById('fl-return-date').value.trim() || 'August 2027';
+        const tripType = document.getElementById('fl-trip-type').value;
+        const cabin = document.getElementById('fl-cabin').value;
+        const currency = document.getElementById('fl-currency').value;
+        const targetFare = parseFloat(document.getElementById('fl-target').value) || null;
+        const checkedBag = toggleCheckedBag.checked;
+
+        const progressBox = document.getElementById('flight-agent-progress');
+        const runBtn = document.getElementById('run-flight-live-btn');
+        progressBox.classList.add('active');
+        runBtn.disabled = true;
+
+        setPillState('st-fl-mapper', 'st-fl-mapper-badge', 'running', 'Mapping...');
+        setPillState('st-fl-a', 'st-fl-a-badge', 'running', 'Searching...');
+        setPillState('st-fl-b', 'st-fl-b-badge', 'running', 'Searching...');
+        setPillState('st-fl-c', 'st-fl-c-badge', 'running', 'Hunting...');
+        setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', '', 'Waiting');
+
+        try {
+          const mapperPrompt = `You are Subagent F1 (departure-hub-mapper). Identify all direct outbound flights from ${origin} and map viable transit hubs toward ${dest} for travel in ${departDate}. Partition the globe into 3 corridors: Corridor A (Direct & Major Alliance), Corridor B (Continental Mega-Hubs), Corridor C (Low-Cost Carriers & 2/3/4 Hops via secondary hubs).`;
+          const corridorAPrompt = `You are Subagent F2 (corridor-a-scout). Search live direct flights and standard 1-stop single-ticket airline alliance routes between ${origin} and ${dest} around ${departDate}. Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`;
+          const corridorBPrompt = `You are Subagent F3 (corridor-b-scout). Search live 2- and 3-flight combinations between ${origin} and ${dest} through major continental mega-hubs (e.g. Tokyo Narita/Haneda, Seoul Incheon, Singapore, Dubai, Doha, London Heathrow, Los Angeles, etc.). Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`;
+          const corridorCPrompt = `You are Subagent F4 (corridor-c-scout). Explore low-cost carriers (Jetstar, Zipair, Scoot, AirAsia, Southwest, Volaris, Alaska, WestJet, Ryanair, Wizz, EasyJet) and test 2-, 3-, or 4-flight hacker chains between ${origin} and ${dest} around ${departDate} via intermediate hubs (e.g. Honolulu, Fiji, Mexico City, Santiago, Taipei, Southeast Asia).`;
+
+          const [mapperOut, corridorAOut, corridorBOut, corridorCOut] = await Promise.all([
+            callGeminiGrounded(apiKey, mapperPrompt).then(r => { setPillState('st-fl-mapper', 'st-fl-mapper-badge', 'done', 'Done ✓'); return r; }),
+            sleep(300).then(() => callGeminiGrounded(apiKey, corridorAPrompt)).then(r => { setPillState('st-fl-a', 'st-fl-a-badge', 'done', 'Done ✓'); return r; }),
+            sleep(600).then(() => callGeminiGrounded(apiKey, corridorBPrompt)).then(r => { setPillState('st-fl-b', 'st-fl-b-badge', 'done', 'Done ✓'); return r; }),
+            sleep(900).then(() => callGeminiGrounded(apiKey, corridorCPrompt)).then(r => { setPillState('st-fl-c', 'st-fl-c-badge', 'done', 'Done ✓'); return r; })
+          ]);
+
+          setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', 'running', 'Auditing 3h Layovers...');
+
+          const stitchPrompt = `You are Subagent F5 (hacker-stitcher-auditor) and Lead Flight Route Synthesizer following AGENTS.md.
+Synthesize findings for ${origin} ➔ ${dest} in ${departDate} (${tripType}, ${cabin}, Currency: ${currency}, Luggage: ${checkedBag ? '1 Checked Bag Included' : 'Carry-on Only'}).
+Enforce a 3-hour minimum safety layover buffer on all self-transfers.
+Audit baggage policies, credit card surcharges, and transit visa requirements.
+Return ONLY valid JSON matching this exact structure:
+{
+  "best_route_summary": "${origin} ➔ HNL ➔ LAX ➔ ${dest}",
+  "best_net_fare": 0.0,
+  "best_engine": "Skyscanner",
+  "verdict": "EXCELLENT DEAL | GOOD FARE | EXPENSIVE / WAIT",
+  "deal_booking_guide": ["Step 1...", "Step 2..."],
+  "combinations": [
+    {
+      "route_summary": "${origin} ➔ ... ➔ ${dest}",
+      "hops": 1,
+      "airlines": "Airline Names",
+      "duration_hours": 24.5,
+      "layovers_summary": "Hub (3.5h)",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (Protected) | Self-Transfer (Hacker Fare)",
+      "base_fare": 0.0,
+      "checked_bag_fee": 0.0,
+      "net_fare": 0.0,
+      "cheapest_engine": "Skyscanner",
+      "skyscanner_price": 0.0,
+      "google_flights_price": 0.0,
+      "kayak_price": 0.0,
+      "skyscanner_url": "https://...",
+      "google_flights_url": "https://...",
+      "kayak_url": "https://...",
+      "visa_warnings": "Transit visa notes",
+      "pos_arbitrage_note": "Currency notes"
+    }
+  ]
+}
+
+--- MAPPER ---
+${mapperOut}
+--- CORRIDOR A ---
+${corridorAOut}
+--- CORRIDOR B ---
+${corridorBOut}
+--- CORRIDOR C ---
+${corridorCOut}`;
+
+          const rawJson = await callGeminiGrounded(apiKey, stitchPrompt, true);
+          const result = parseJsonSafe(rawJson);
+          setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', 'done', 'Complete ✓');
+
+          const nowStr = new Date().toLocaleString();
+          const localWatch = JSON.parse(localStorage.getItem('ps_local_flight_watchlist') || '[]');
+          const newRoute = {
+            origin: origin,
+            destination: dest,
+            depart_date: departDate,
+            return_date: returnDate,
+            trip_type: tripType,
+            cabin_class: cabin,
+            checked_bag: checkedBag,
+            currency: currency,
+            target_price: targetFare,
+            best_net_fare: result.best_net_fare,
+            best_route_summary: result.best_route_summary,
+            best_engine: result.best_engine,
+            verdict: result.verdict,
+            last_checked: nowStr
+          };
+          const filteredWatch = localWatch.filter(w => !(w.origin === origin && w.destination === dest));
+          filteredWatch.unshift(newRoute);
+          localStorage.setItem('ps_local_flight_watchlist', JSON.stringify(filteredWatch));
+
+          const localOffers = JSON.parse(localStorage.getItem('ps_local_flight_offers') || '[]');
+          const newOffers = (result.combinations || []).map(c => ({
+            ...c,
+            origin: origin,
+            destination: dest,
+            depart_date: departDate,
+            return_date: returnDate,
+            currency: currency,
+            timestamp: nowStr,
+            skyscanner_url: c.skyscanner_url || buildSkyscannerUrl(origin, dest, departDate, returnDate),
+            google_flights_url: c.google_flights_url || buildGoogleFlightsUrl(origin, dest, departDate, returnDate),
+            kayak_url: c.kayak_url || buildKayakUrl(origin, dest, departDate, returnDate)
+          }));
+          localStorage.setItem('ps_local_flight_offers', JSON.stringify([...newOffers, ...localOffers]));
+
+          if (result.deal_booking_guide && result.deal_booking_guide.length > 0) {
+            const rBox = document.getElementById('flight-recipe-box');
+            rBox.style.display = 'block';
+            rBox.innerHTML = `<strong>💡 Step-by-Step Hacker Booking Guide for ${origin} ➔ ${dest} (${fmt(result.best_net_fare, currency)}):</strong>
+              <ol>${result.deal_booking_guide.map(s => `<li>${s}</li>`).join('')}</ol>`;
+          }
+
+          render();
+        } catch (err) {
+          alert('Flight Research Error: ' + err.message);
+        } finally {
+          runBtn.disabled = false;
+        }
+      });
+
+      // 8. Send to Flight Cloud Runner
+      document.getElementById('send-flight-cloud-btn').addEventListener('click', async () => {
+        const ghRepo = localStorage.getItem('ps_gh_repo') || 'webrs-svg/deep-price-agent';
+        const ghToken = localStorage.getItem('ps_gh_token');
+        const origin = document.getElementById('fl-origin').value.trim().toUpperCase();
+        const dest = document.getElementById('fl-dest').value.trim().toUpperCase();
+        if (!origin || !dest) {
+          alert('Please enter an Origin and Destination airport code first.');
+          return;
+        }
+        if (!ghRepo || !ghToken) {
+          settingsDrawer.classList.add('open');
+          alert('To trigger the 24/7 GitHub Cloud Runner, enter your GitHub Repo (owner/repo) and a GitHub Token in ⚙️ Setup.');
+          return;
+        }
+        const departDate = document.getElementById('fl-depart-date').value.trim() || 'August 2027';
+        const returnDate = document.getElementById('fl-return-date').value.trim() || 'August 2027';
+        const tripType = document.getElementById('fl-trip-type').value;
+        const currency = document.getElementById('fl-currency').value;
+        const targetFare = document.getElementById('fl-target').value.trim();
+        const checkedBag = toggleCheckedBag.checked;
+
+        const btn = document.getElementById('send-flight-cloud-btn');
+        btn.disabled = true;
+        btn.textContent = '☁️ Dispatching Flight Watch...';
+        try {
+          const url = `https://api.github.com/repos/${ghRepo}/actions/workflows/price_watch.yml/dispatches`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': `Bearer ${ghToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              ref: 'main',
+              inputs: {
+                mode: 'flight',
+                origin: origin,
+                destination: dest,
+                depart_date: departDate,
+                return_date: returnDate,
+                trip_type: tripType,
+                currency: currency,
+                target_price: targetFare,
+                checked_bag: checkedBag
+              }
+            })
+          });
+          if (res.status === 204 || res.ok) {
+            alert(`✅ Sent ${origin} ➔ ${dest} to your 24/7 Cloud Flight Watcher! GitHub Actions is now exploring all multi-hop combinations and will monitor every 6 hours.`);
+          } else {
+            const txt = await res.text();
+            throw new Error(`GitHub API returned ${res.status}: ${txt}`);
+          }
+        } catch (e) {
+          alert('Cloud Trigger Error: ' + e.message);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '☁️ Send to 24/7 Cloud Flight Watch (GitHub)';
+        }
+      });
+
+      // 9. Product Search Live Button Click
       document.getElementById('run-live-btn').addEventListener('click', async () => {
         const apiKey = localStorage.getItem('ps_gemini_key');
         if (!apiKey) {
           settingsDrawer.classList.add('open');
           cfgGeminiKey.focus();
-          alert('Please paste your free Google AI Studio Gemini API Key once in ⚙️ Cloud Setup so your phone can run the 3 live subagents!');
+          alert('Please paste your Google AI Studio Gemini API Key in ⚙️ Setup.');
           return;
         }
         const product = document.getElementById('inp-product').value.trim();
@@ -814,9 +1454,9 @@
         setPillState('st-synth', 'st-synth-badge', '', 'Waiting');
 
         try {
-          const scoutPrompt = `You are Subagent 1 (price-scout). Search live current in-stock prices in ${region} (${currency}) for "${product}" (${sku}). Check official stores, big-box retailers, specialist stores, and Amazon. Include exact product URLs, base price, shipping cost, and stock status. Never use outdated MSRP.`;
-          const dealPrompt = `You are Subagent 2 (deal-hunter). Search OzBargain, Slickdeals, Reddit, cashback portals (ShopBack, TopCashback, Rakuten), active promo codes, discounted gift cards, and retailer Price-Beat guarantees (e.g., Officeworks 5% beat, JB Hi-Fi price match, Best Buy) for "${product}" in ${region} (${currency}).`;
-          const trustPrompt = `You are Subagent 3 (trust-auditor). Audit the historical low price (CamelCamelCamel, PriceSpy, deal forums) for "${product}" in ${region} (${currency}), detect fake inflated MSRP discounts, and classify sellers into Authorized vs Grey Import.`;
+          const scoutPrompt = `You are Subagent 1 (price-scout). Search live current in-stock prices in ${region} (${currency}) for "${product}" (${sku}). Check official stores, big-box retailers, specialist stores, and Amazon. Include exact product URLs, base price, shipping cost, and stock status.`;
+          const dealPrompt = `You are Subagent 2 (deal-hunter). Search OzBargain, Slickdeals, Reddit, cashback portals (ShopBack, TopCashback, Rakuten), active promo codes, discounted gift cards, and retailer Price-Beat guarantees for "${product}" in ${region} (${currency}).`;
+          const trustPrompt = `You are Subagent 3 (trust-auditor). Audit the historical low price for "${product}" in ${region} (${currency}), detect fake inflated MSRP discounts, and classify sellers into Authorized vs Grey Import.`;
 
           const [scoutOut, dealOut, trustOut] = await Promise.all([
             callGeminiGrounded(apiKey, scoutPrompt).then(r => { setPillState('st-scout', 'st-scout-badge', 'done', 'Done ✓'); return r; }),
@@ -902,7 +1542,7 @@ ${trustOut}`;
         }
       });
 
-      // 6. Send to 24/7 Cloud Watchlist (Triggers GitHub Actions workflow_dispatch)
+      // 10. Send to Product Cloud Watchlist
       document.getElementById('send-cloud-btn').addEventListener('click', async () => {
         const ghRepo = localStorage.getItem('ps_gh_repo') || 'webrs-svg/deep-price-agent';
         const ghToken = localStorage.getItem('ps_gh_token');
@@ -913,7 +1553,7 @@ ${trustOut}`;
         }
         if (!ghRepo || !ghToken) {
           settingsDrawer.classList.add('open');
-          alert('To trigger the 24/7 GitHub Cloud Runner directly from this button, enter your GitHub Repo (owner/repo) and a GitHub Token in ⚙️ Cloud Setup.');
+          alert('To trigger the 24/7 GitHub Cloud Runner directly, enter your GitHub Repo and a GitHub Token in ⚙️ Setup.');
           return;
         }
         const sku = document.getElementById('inp-sku').value.trim();
@@ -936,16 +1576,16 @@ ${trustOut}`;
             body: JSON.stringify({
               ref: 'main',
               inputs: {
+                mode: 'product',
                 product_query: product,
                 sku: sku,
-                region: region,
                 currency: currency,
                 target_price: targetPrice
               }
             })
           });
           if (res.status === 204 || res.ok) {
-            alert(`✅ Sent "${product}" to your 24/7 Cloud Runner! GitHub Actions is now running the 3 subagents in the cloud and will monitor it every 6 hours.`);
+            alert(`✅ Sent "${product}" to your 24/7 Cloud Runner!`);
           } else {
             const txt = await res.text();
             throw new Error(`GitHub API returned ${res.status}: ${txt}`);
@@ -958,7 +1598,9 @@ ${trustOut}`;
         }
       });
 
-      render();
+      // Initial restore of active mode
+      const savedMode = localStorage.getItem('ps_active_mode') || 'flight';
+      switchMode(savedMode);
     })();
   </script>
 </body>
