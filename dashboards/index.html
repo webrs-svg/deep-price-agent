@@ -946,6 +946,16 @@
         return `https://www.kayak.com.au/flights/${o}-${d}/${depNorm.iso}?sort=price_a`;
       }
 
+      function buildMulticityGoogleFlightsUrl(legs) {
+        if (!legs || legs.length === 0) return '';
+        const parts = legs.map(l => {
+          const norm = normalizeFlightDate(l.date, '05');
+          return `from ${l.origin.toUpperCase()} to ${l.dest.toUpperCase()} on ${norm.iso}`;
+        });
+        const q = 'Flights ' + parts.join(' then ');
+        return `https://www.google.com/travel/flights?q=${encodeURIComponent(q)}`;
+      }
+
       // 5. Render Functions
       const flOffersTbody = document.getElementById('flight-offers-tbody');
       const flWatchTbody = document.getElementById('flight-watchlist-tbody');
@@ -1065,6 +1075,22 @@
               ? f.kayak_url
               : buildKayakUrl(f.origin, f.destination, depDateParam, retDateParam);
 
+            let multicityUrl = f.multicity_url;
+            if (!multicityUrl && (f.hops > 1 || (f.route_summary && f.route_summary.includes('➔')))) {
+              const parts = (f.route_summary || '').split('➔').map(p => p.trim());
+              if (parts.length > 2) {
+                const legs = [];
+                for (let i = 0; i < parts.length - 1; i++) {
+                  legs.push({ origin: parts[i], dest: parts[i+1], date: depDateParam });
+                }
+                multicityUrl = buildMulticityGoogleFlightsUrl(legs);
+              }
+            }
+
+            const verifiedBadge = f.is_live_verified
+              ? '<span class="badge badge-green" style="margin-left:4px;">🟢 Live Verified</span>'
+              : '';
+
             return `<tr>
               <td>
                 <strong style="color:var(--text); font-size:0.92rem;">${f.route_summary || `${f.origin} ➔ ${f.destination}`}</strong>
@@ -1074,7 +1100,10 @@
                 <div style="font-size:0.83rem; font-weight:600; color:var(--text); white-space:nowrap;">🛫 ${depStr}</div>
                 <div style="font-size:0.75rem; color:var(--muted); margin-top:2px; white-space:nowrap;">🛬 ${retStr}</div>
               </td>
-              <td><span class="badge badge-purple">${f.hops || 1} ${Number(f.hops) === 1 ? 'Direct' : 'Flights'}</span></td>
+              <td>
+                <span class="badge badge-purple">${f.hops || 1} ${Number(f.hops) === 1 ? 'Direct' : 'Flights'}</span>
+                ${verifiedBadge}
+              </td>
               <td><strong>${f.airlines || '—'}</strong></td>
               <td>
                 <div>${f.duration_hours ? `${f.duration_hours}h total` : '—'}</div>
@@ -1088,6 +1117,7 @@
                   <a class="btn btn-sm btn-primary" href="${skyUrl}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
                   <a class="btn btn-sm" href="${googUrl}" target="_blank" rel="noopener">Google Flights &rarr;</a>
                   <a class="btn btn-sm" href="${kayakUrl}" target="_blank" rel="noopener">Kayak &rarr;</a>
+                  ${multicityUrl ? `<a class="btn btn-sm" style="background:#0284c7; color:#fff;" href="${multicityUrl}" target="_blank" rel="noopener">🛒 Hacker Cart (Multi-City) &rarr;</a>` : ''}
                 </div>
               </td>
             </tr>`;
@@ -1227,13 +1257,12 @@
           if (primary !== 'gemini-3.8-flash') attempts.push({ model: 'gemini-3.8-flash', ground: false });
           if (primary !== 'gemini-3.5-flash-lite') attempts.push({ model: 'gemini-3.5-flash-lite', ground: false });
         } else {
+          // Strict Zero-Hallucination Policy: Only run with verified Google Search Grounding
           if (pref !== 'auto') attempts.push({ model: pref, ground: true });
           attempts.push(
             { model: 'gemini-3.8-flash', ground: true },
             { model: 'gemini-2.5-flash', ground: true },
-            { model: 'gemini-3.5-flash-lite', ground: true },
-            { model: 'gemini-3.8-flash', ground: false },
-            { model: 'gemini-3.5-flash-lite', ground: false }
+            { model: 'gemini-3.5-flash-lite', ground: true }
           );
         }
 

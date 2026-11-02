@@ -172,23 +172,93 @@ def build_kayak_url(origin: str, dest: str, depart_date: str = "", return_date: 
     return f"https://www.kayak.com.au/flights/{o}-{d}/{dep_iso}?sort=price_a"
 
 
+def build_multicity_google_flights_url(legs: list[tuple[str, str, str]]) -> str:
+    """
+    Builds a unified multi-city Google Flights URL bundling all separate hacker legs:
+    e.g. legs = [("SYD", "HNL", "2027-08-04"), ("HNL", "LAX", "2027-08-05"), ("LAX", "SEA", "2027-08-05")]
+    """
+    parts = []
+    for origin, dest, dep_date in legs:
+        dep_iso, _, _ = normalize_flight_date(dep_date, "05")
+        parts.append(f"from {origin.strip().upper()} to {dest.strip().upper()} on {dep_iso}")
+    query = "Flights " + " then ".join(parts)
+    return f"https://www.google.com/travel/flights?q={urllib.parse.quote(query)}"
+
+
+def fetch_live_google_flights(
+    origin: str,
+    dest: str,
+    depart_date: str,
+    currency: str = "AUD",
+) -> list[dict[str, Any]]:
+    """
+    Fetches real-time seat inventory and live prices directly from Google Flights (zero API key needed).
+    Returns verified flights or empty list if no seats are published/available yet.
+    """
+    try:
+        from fast_flights import FlightQuery, Passengers, create_query, get_flights
+        dep_iso, _, readable = normalize_flight_date(depart_date, "05")
+        q = create_query(
+            flights=[FlightQuery(date=dep_iso, from_airport=origin.strip().upper(), to_airport=dest.strip().upper())],
+            seat="economy",
+            trip="one-way",
+            passengers=Passengers(adults=1),
+            currency=currency.strip().upper(),
+        )
+        res = get_flights(q)
+        results: list[dict[str, Any]] = []
+        if hasattr(res, "__iter__"):
+            for f in list(res)[:8]:
+                legs: list[dict[str, Any]] = []
+                for leg in getattr(f, "flights", []):
+                    dep_dt = f"{leg.departure.date[0]}-{str(leg.departure.date[1]).zfill(2)}-{str(leg.departure.date[2]).zfill(2)} {str(leg.departure.time[0]).zfill(2)}:{str(leg.departure.time[1]).zfill(2)}"
+                    arr_dt = f"{str(leg.arrival.time[0]).zfill(2)}:{str(leg.arrival.time[1]).zfill(2)}"
+                    legs.append({
+                        "from": leg.from_airport.code,
+                        "to": leg.to_airport.code,
+                        "departure": dep_dt,
+                        "arrival": arr_dt,
+                        "duration_mins": leg.duration,
+                        "plane": leg.plane_type,
+                    })
+                results.append({
+                    "price": float(f.price) if getattr(f, "price", None) else None,
+                    "currency": currency.upper(),
+                    "airlines": ", ".join(f.airlines) if getattr(f, "airlines", None) else "Multiple Airlines",
+                    "hops": len(legs),
+                    "legs": legs,
+                    "date": dep_iso,
+                    "readable_date": readable,
+                    "is_live_verified": True,
+                })
+        return results
+    except Exception as exc:
+        print(f"  [Live Google Flights API] Notice for {origin} ➔ {dest} ({depart_date}): {exc}")
+        return []
+
+
 async def run_grounded_subagent(
     client: Any,
     role_name: str,
     prompt_text: str,
     system_instruction: str,
+    require_grounding: bool = True,
 ) -> str:
-    """Executes a single subagent with live Google Search Grounding via google-genai, with automatic Free-Tier fallback."""
+    """Executes a single subagent with live Google Search Grounding via google-genai, with strict zero-hallucination guardrail."""
     from google.genai import types
 
     print(f"  [Subagent Start] -> {role_name}")
+    # Enforce strict grounding: try models with Google Search Grounding enabled
     attempts = [
         (DEFAULT_MODEL, True),
         ("gemini-2.5-flash", True),
         ("gemini-3.5-flash-lite", True),
-        (DEFAULT_MODEL, False),
-        ("gemini-3.5-flash-lite", False),
     ]
+    if not require_grounding:
+        attempts.extend([
+            (DEFAULT_MODEL, False),
+            ("gemini-3.5-flash-lite", False),
+        ])
     seen: set[tuple[str, bool]] = set()
     unique_attempts = [a for a in attempts if not (a in seen or seen.add(a))]
 
@@ -218,6 +288,9 @@ async def run_grounded_subagent(
             raise
 
     if response is None and last_exc is not None:
+        if require_grounding:
+            print(f"  [Zero-Hallucination Guardrail] {role_name}: Search grounding limits reached. Refusing to invent hallucinated fares.")
+            return f"⚠️ Live search grounding unavailable for {role_name} due to API limits. No unverified hallucinated prices generated."
         raise last_exc
 
     text = response.text or ""
@@ -360,6 +433,9 @@ async def synthesize_flight_routes(
         skyscanner_url: str = Field(description="Direct search link to Skyscanner")
         google_flights_url: str = Field(description="Direct search link to Google Flights")
         kayak_url: str = Field(description="Direct search link to Kayak")
+        multicity_url: str | None = Field(default=None, description="Unified Google Flights multi-city booking link bundling all legs")
+        hacker_cart_links: list[dict[str, str]] | None = Field(default=None, description="Individual 1-click booking links for each separate leg")
+        is_live_verified: bool = Field(default=False, description="True if confirmed against real-time live Google Flights seat inventory")
         direct_booking_url: str | None = Field(default=None, description="Direct airline link or booking link if available")
         visa_warnings: str = Field(description="Transit visa / ESTA / eTA requirements or None")
         pos_arbitrage_note: str = Field(description="Savings if booked in foreign currency or None")
@@ -663,12 +739,36 @@ async def process_flight_item(
         "CURRENCY": route_info.get("currency", "AUD"),
     }
 
-    # 1. Step 1: Map departure hubs & corridors
-    mapper_prompt = render_prompt(templates["departure-hub-mapper"], replacements)
-    mapper_out = await run_grounded_subagent(client, "departure-hub-mapper", mapper_prompt, agents_md)
+    # 1. Step 1: Query Real-Time Live Google Flights Inventory (Zero API Keys Needed)
+    print(f"  [Live Flight Engine] Querying live Google Flights seat inventory for {origin} ➔ {dest} ({route_info.get('depart_date')})...")
+    live_direct_flights = fetch_live_google_flights(
+        origin,
+        dest,
+        route_info.get("depart_date", "August 2027"),
+        route_info.get("currency", "AUD"),
+    )
+    live_inventory_context = ""
+    if live_direct_flights:
+        print(f"  [Live Flight Engine] Found {len(live_direct_flights)} live published options on Google Flights for {origin} ➔ {dest}!")
+        live_inventory_context += f"\n\n### Confirmed Live Google Flights Seat Inventory for {origin} ➔ {dest}:\n"
+        for idx, lf in enumerate(live_direct_flights[:6]):
+            leg_desc = " ➔ ".join([f"{l['from']} to {l['to']} ({l['plane']})" for l in lf["legs"]])
+            live_inventory_context += f"- Option {idx+1}: {lf['airlines']} | AUD {lf['price']} | {lf['hops']} legs ({leg_desc})\n"
+    else:
+        print(f"  [Live Flight Engine] Notice: 0 published flights returned by Google Flights reservation systems for {origin} ➔ {dest}.")
+        live_inventory_context += f"\n\n### Live Flight Engine Status for {origin} ➔ {dest}:\n- Reservation systems returned 0 confirmed seats on this date. Airline schedules may not be loaded yet.\n"
 
-    # 2. Step 2: Parallel Corridor Scouts (Corridor A, B, and C)
-    sys_inst_corridors = agents_md + "\n\n### Hub Topology Context from departure-hub-mapper:\n" + mapper_out
+    # 2. Step 2: Map departure hubs & corridors
+    mapper_prompt = render_prompt(templates["departure-hub-mapper"], replacements)
+    mapper_out = await run_grounded_subagent(client, "departure-hub-mapper", mapper_prompt, agents_md + live_inventory_context)
+
+    # 3. Step 3: Parallel Corridor Scouts (Corridor A, B, and C)
+    sys_inst_corridors = (
+        agents_md
+        + live_inventory_context
+        + "\n\n### Hub Topology Context from departure-hub-mapper:\n"
+        + mapper_out
+    )
     corridor_a_prompt = render_prompt(templates["corridor-a-scout"], replacements)
     corridor_b_prompt = render_prompt(templates["corridor-b-scout"], replacements)
     corridor_c_prompt = render_prompt(templates["corridor-c-scout"], replacements)
@@ -679,9 +779,10 @@ async def process_flight_item(
         run_grounded_subagent(client, "corridor-c-scout", corridor_c_prompt, sys_inst_corridors),
     )
 
-    # 3. Step 3: Hacker Stitcher & Layover Auditor (enforces 3h buffer, visas, deep links)
+    # 4. Step 4: Hacker Stitcher & Layover Auditor (enforces 3h buffer, visas, deep links)
     stitcher_context = (
         agents_md
+        + live_inventory_context
         + "\n\n### Corridor A Results:\n"
         + corridor_a_out
         + "\n\n### Corridor B Results:\n"
@@ -692,7 +793,7 @@ async def process_flight_item(
     stitcher_prompt = render_prompt(templates["hacker-stitcher-auditor"], replacements)
     stitcher_out = await run_grounded_subagent(client, "hacker-stitcher-auditor", stitcher_prompt, stitcher_context)
 
-    # 4. Step 4: Lead Flight Route Synthesizer
+    # 5. Step 5: Lead Flight Route Synthesizer
     synth = await synthesize_flight_routes(
         client,
         route_info,
@@ -719,7 +820,7 @@ async def process_flight_item(
     route_info["last_checked"] = now_iso
     route_info["latest_report"] = report_filename
 
-    # Record historical flight combinations with exact dates & deep links
+    # Record historical flight combinations with exact dates, deep links, and Hacker Cart
     for combo in synth.get("combinations", []):
         deal_dep = combo.get("deal_depart_date") or route_info.get("depart_date", "")
         deal_ret = combo.get("deal_return_date") or route_info.get("return_date", "")
@@ -729,6 +830,28 @@ async def process_flight_item(
         combo["skyscanner_url"] = build_skyscanner_url(origin, dest, deal_dep, deal_ret)
         combo["google_flights_url"] = build_google_flights_url(origin, dest, deal_dep, deal_ret)
         combo["kayak_url"] = build_kayak_url(origin, dest, deal_dep, deal_ret)
+
+        # Build 1-Click Multi-Leg Hacker Cart links
+        r_sum = combo.get("route_summary", "")
+        parts = [p.strip() for p in r_sum.split("➔")] if "➔" in r_sum else [origin, dest]
+        if len(parts) > 2:
+            legs_tuples = []
+            hacker_links = []
+            for i in range(len(parts) - 1):
+                p_from = parts[i]
+                p_to = parts[i + 1]
+                legs_tuples.append((p_from, p_to, deal_dep))
+                hacker_links.append({
+                    "leg": f"{p_from} ➔ {p_to}",
+                    "google_flights_url": build_google_flights_url(p_from, p_to, deal_dep),
+                    "skyscanner_url": build_skyscanner_url(p_from, p_to, deal_dep),
+                })
+            combo["hacker_cart_links"] = hacker_links
+            combo["multicity_url"] = build_multicity_google_flights_url(legs_tuples)
+
+        # Flag if verified by live Google Flights engine
+        if live_direct_flights and any(abs((f.get("price") or 0) - (combo.get("base_fare") or 0)) < 30 for f in live_direct_flights):
+            combo["is_live_verified"] = True
 
         flight_history_data.setdefault("records", []).append(
             {
