@@ -2,5 +2,75 @@
   "schema_version": "1.0",
   "default_currency": "AUD",
   "last_updated": "2026-11-02T17:50:00+11:00",
-  "routes": []
+  "routes": [
+    {
+      "id": "syd-sea",
+      "origin": "SYD",
+      "destination": "SEA",
+      "depart_date": "2027-08-10",
+      "return_date": "2027-08-25",
+      "trip_type": "return",
+      "cabin_class": "Economy",
+      "checked_bag": true,
+      "currency": "AUD",
+      "target_price": 1400.0,
+      "best_net_fare": 1384.23,
+      "best_route_summary": "SYD âž” SFO âž” SEA (2-Ticket Hacker Split)",
+      "best_depart_date": "2027-08-10",
+      "best_return_date": "2027-08-25",
+      "best_engine": "RouteStack GDS Split Tickets",
+      "hops": 2,
+      "verdict": "EXCELLENT DEAL",
+      "availability_status": "FLIGHTS_AVAILABLE",
+      "last_checked": "2026-11-03T19:43:41.501018+11:00",
+      "latest_report": "syd-sea-2026-11-03.md",
+      "corridors_analyzed": [
+        {
+          "hub": "NAN",
+          "origin_to_hub_fare": 762.82,
+          "airlines": "Fiji Airways",
+          "forwarding_candidates_tested": [
+            "LAX",
+            "SFO",
+            "HNL"
+          ],
+          "best_forwarding_dest": "None",
+          "forwarding_fare": null,
+          "two_hop_total": 1641.44,
+          "three_hop_total": null,
+          "optimization_verdict": "Direct connection from NAN to SEA available (AUD 1641.44)"
+        },
+        {
+          "hub": "HNL",
+          "origin_to_hub_fare": 848.89,
+          "airlines": "Virgin Au",
+          "forwarding_candidates_tested": [
+            "LAX",
+            "SFO",
+            "YVR"
+          ],
+          "best_forwarding_dest": "None",
+          "forwarding_fare": null,
+          "two_hop_total": 1719.9,
+          "three_hop_total": null,
+          "optimization_verdict": "Direct connection from HNL to SEA available (AUD 1719.9)"
+        },
+        {
+          "hub": "SFO",
+          "origin_to_hub_fare": 848.89,
+          "airlines": "Virgin Au",
+          "forwarding_candidates_tested": [
+            "LAX",
+            "SIN",
+            "HKG"
+          ],
+          "best_forwarding_dest": "None",
+          "forwarding_fare": null,
+          "two_hop_total": 1384.23,
+          "three_hop_total": null,
+          "optimization_verdict": "Direct connection from SFO to SEA available (AUD 1384.23)"
+        }
+      ]
+    }
+  ]
 }

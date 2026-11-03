@@ -1,4 +1,4 @@
-﻿# Subagent Prompt Templates (`subagent-prompts.md`)
+# Subagent Prompt Templates (`subagent-prompts.md`)
 
 Use these exact prompt structures when invoking parallel subagents via `invoke_subagent` (in Antigravity) or via asynchronous Gemini API calls (in `cloud/cloud_runner.py`).
 
@@ -12,6 +12,7 @@ Use these exact prompt structures when invoking parallel subagents via `invoke_s
 
 - **Role**: `Live Price & Inventory Scout`
 - **TypeName**: `research`
+- **Recommended Temperature**: `0.1` (Deterministic factual extraction)
 
 ### Prompt Template
 ```markdown
@@ -34,6 +35,7 @@ You are the **Live Price & Inventory Scout (`price-scout`)** for a deep price co
    - Verify the listing is for the **exact SKU/variant** (brand-new sealed, not refurbished/renewed/open-box unless explicitly noted in a separate warning section).
    - Check live stock status (`In Stock`, `Low Stock`, `Pre-order / Backorder`, `In-Store Only`, `Out of Stock`).
    - Estimate or extract **Shipping cost** and **Tax/GST/Import duties** to {{REGION}}.
+   - Assign a **Confidence Tier** to each offer (`LIVE_VERIFIED` for confirmed live stock, `HISTORICAL_ESTIMATE` if unconfirmed).
 3. Return a structured Markdown report containing:
    - At least 5–10 verified retailer listings sorted by (Base Price + Shipping).
    - Exact product page URL for each listing.
@@ -47,6 +49,7 @@ You are the **Live Price & Inventory Scout (`price-scout`)** for a deep price co
 
 - **Role**: `Deal Coupon & Cashback Hunter`
 - **TypeName**: `research`
+- **Recommended Temperature**: `0.25` (Creative deal forum scanning & stacking)
 
 ### Prompt Template
 ```markdown
@@ -71,7 +74,7 @@ Your mission is to find every legitimate way to reduce the price below the stand
    - Note any category caps (e.g., "Up to $50 cashback") or coupon exclusions.
 4. **Price Match / Price Beat & Gift Card Stacking**:
    - Identify retailers carrying `{{PRODUCT_NAME}}` that offer a **Price Beat Guarantee** (e.g., Officeworks 5% Price Beat, Bunnings, JB Hi-Fi live chat / "Ask for a Deal", Harvey Norman, Best Buy) and explain how to trigger it against the cheapest in-stock competitor.
-   - Identify whether discounted gift cards (e.g., 3%–8% off retailer or Ultimate/TCN gift cards) can be stacked at checkout.
+   - Identify whether discounted gift cards (e.g., 3%–8% off retailer or Ultimate/TCN gift cards via supermarket promotions or member portals like Macquarie/Suncorp/NRMA) can be stacked at checkout.
 5. Return a structured Markdown report detailing all verified discounts, community deal benchmarks, and a step-by-step "Ultimate Deal Stack Recipe".
 ```
 
@@ -81,6 +84,7 @@ Your mission is to find every legitimate way to reduce the price below the stand
 
 - **Role**: `Price History & Trust Auditor`
 - **TypeName**: `research`
+- **Recommended Temperature**: `0.0` (Strictly factual historical auditing)
 
 ### Prompt Template
 ```markdown
@@ -119,6 +123,7 @@ You are the **Historical Price & Seller Trust Auditor (`trust-auditor`)** for a 
 
 - **Role**: `Departure Hub & Route Mapper`
 - **TypeName**: `research`
+- **Recommended Temperature**: `0.1` (Strict geographic gateway mapping)
 
 ### Prompt Template
 ```markdown
@@ -137,7 +142,9 @@ You are the **Departure Hub & Route Mapper (`departure-hub-mapper`)**.
    - **Corridor A (Primary & Direct Gateway Corridor)**: Direct non-stop flights and closest major alliance gateway hubs along the direct path.
    - **Corridor B (Intermediate Continental Mega-Hub Corridor)**: High-traffic continental mega-hubs with massive flight frequencies (e.g. Middle East [DXB, DOH, AUH], East Asia [HND, NRT, ICN, SIN, TPE, HKG], Europe [LHR, CDG, AMS, FRA], or North America [LAX, SFO, JFK, ORD, DFW, YVR] depending on orientation).
    - **Corridor C (Low-Cost & Unconventional Multi-Hop Corridor)**: Secondary hubs and budget carrier transit points testing 2, 3, or 4 flight chains (e.g. via Honolulu, Fiji, Auckland, Mexico City, Santiago, Bali, Bangkok, Kuala Lumpur, Iceland, etc.).
-3. Return a structured breakdown of candidate hub combinations to guide the corridor scouts.
+3. **Strict Inventory Honesty**:
+   - If {{ORIGIN}} has no scheduled international routes connecting towards {{DESTINATION}}, note this explicitly.
+   - Return a structured breakdown of candidate hub combinations to guide the corridor scouts.
 ```
 
 ---
@@ -146,6 +153,7 @@ You are the **Departure Hub & Route Mapper (`departure-hub-mapper`)**.
 
 - **Role**: `Primary Corridor & Alliance Scout`
 - **TypeName**: `research`
+- **Recommended Temperature**: `0.1` (Precise schedule and fare verification)
 
 ### Prompt Template
 ```markdown
@@ -159,8 +167,18 @@ You are the **Primary Corridor & Alliance Scout (`corridor-a-scout`)**.
 - **Currency**: {{CURRENCY}}
 
 ### Mandatory Instructions
-1. Search Skyscanner, Google Flights, and Kayak for direct non-stop flights and single-ticket standard 1-stop alliance connections between {{ORIGIN}} and {{DESTINATION}} in {{DEPART_DATE}}.
-2. Record:
+1. Search Skyscanner, Google Flights, and Kayak for direct non-stop flights and single-ticket standard 1-stop alliance connections between {{ORIGIN}} and {{DESTINATION}} around {{DEPART_DATE}}.
+2. **Network Airline Round-Trip Pricing Rule**:
+   - Legacy network alliance carriers (Qantas, United, Delta, American, ANA, Singapore Airlines, Emirates, BA) price round-trips as a single bundled fare. Do NOT quote separate one-way tickets on legacy carriers if return travel is requested, as this inflates prices. Search and report the total round-trip fare.
+3. **Anti-Teaser & Currency Normalization Mandate**:
+   - DO NOT extract promotional lead-in teaser fares (e.g. "Flights from $799*", "$450 each way based on round-trip").
+   - If return travel is requested, ensure the fare covers BOTH outbound and return. If a snippet states "each way", the return fare is at minimum $2 \times \text{fare} + \text{taxes}$.
+   - Identify currency in search snippets: US airline web stores quote in USD. You MUST convert USD to {{CURRENCY}} (e.g. 1 USD ≈ 1.55 AUD). Never quote USD as AUD.
+4. **Strict Inventory Rule**:
+   - ONLY report flights that genuinely exist in the search results or official airline schedules.
+   - If only 1 or 2 flights exist on these dates, ONLY return those 1 or 2 options.
+   - If NO direct or 1-stop alliance flights exist, report clearly: "No direct or 1-stop alliance flights available for {{ORIGIN}} to {{DESTINATION}} on these dates."
+5. Record:
    - Operating Airlines & Flight Numbers
    - Total Travel Duration and Layover Airport/Times
    - Single-Ticket vs Split-Ticket status
@@ -174,6 +192,7 @@ You are the **Primary Corridor & Alliance Scout (`corridor-a-scout`)**.
 
 - **Role**: `Continental Mega-Hub Scout`
 - **TypeName**: `research`
+- **Recommended Temperature**: `0.2` (Balanced continental hub search)
 
 ### Prompt Template
 ```markdown
@@ -189,8 +208,13 @@ You are the **Continental Mega-Hub Scout (`corridor-b-scout`)**.
 ### Mandatory Instructions
 1. Search for 2- and 3-flight combinations between {{ORIGIN}} and {{DESTINATION}} connecting through major continental mega-hubs (e.g. Tokyo Narita/Haneda, Seoul Incheon, Singapore Changi, Dubai, Doha, London Heathrow, Los Angeles, etc.).
 2. Test both full-service carriers (ANA, JAL, Singapore Airlines, Emirates, Qatar, Cathay, United, British Airways) and hybrid long-haul carriers (Zipair, Air Canada, Turkish Airlines).
-3. Ensure all connecting layovers are at least 3 hours for self-transfers (or standard legal minimum connection time for single-ticket airline bookings).
-4. Identify if any mega-hub offers a **Free Stopover Program** (e.g., Japan Airlines stopover in Tokyo, Qatar Airways Discover Qatar stopover, Icelandair free 1-7 day stopover).
+3. **Anti-Teaser & Currency Normalization Mandate**:
+   - Verify that fares quoted cover the complete journey in {{CURRENCY}}. Convert foreign currencies (e.g. USD, EUR) to {{CURRENCY}}.
+   - Do NOT quote one-way teaser headlines as full return fares.
+4. **Strict Inventory Rule**:
+   - Only include flights actually operated and available on these dates. If only a few exist, list only those. If none are found via mega-hubs, state "No mega-hub combinations found".
+5. Ensure all connecting layovers are at least 3 hours for self-transfers (or standard legal minimum connection time for single-ticket airline bookings).
+6. Identify if any mega-hub offers a **Free Stopover Program** (e.g., Japan Airlines stopover in Tokyo, Qatar Airways Discover Qatar stopover, Icelandair free 1-7 day stopover).
 ```
 
 ---
@@ -199,6 +223,7 @@ You are the **Continental Mega-Hub Scout (`corridor-b-scout`)**.
 
 - **Role**: `LCC & Multi-Hop Hacker Explorer`
 - **TypeName**: `research`
+- **Recommended Temperature**: `0.35` (High exploratory creativity for unconventional secondary budget hubs)
 
 ### Prompt Template
 ```markdown
@@ -218,8 +243,16 @@ You are the **LCC & Multi-Hop Hacker Explorer (`corridor-c-scout`)**.
    - Latin America / Mexico (Santiago, Mexico City, Cancun)
    - Southeast Asia / Secondary Asian Hubs (Kuala Lumpur, Manila, Taipei, Osaka)
    - European Budget Hubs or Transatlantic LCCs (London Gatwick, Dublin, Reykjavik)
-3. Calculate the sum of individual ticket prices for each leg in {{CURRENCY}}.
-4. Record estimated carry-on & checked baggage fees per carrier leg.
+3. **Budget Airline Point-to-Point Pricing & Arithmetic Proof**:
+   - Low-cost carriers price point-to-point legs independently and additively.
+   - For every separate leg in the chain (both Outbound and Return), provide an estimated individual leg price in {{CURRENCY}}.
+   - The total price MUST be the mathematical sum of all individual legs. NEVER invent an arbitrary total bundle price.
+   - Beware of promotional teaser rates (e.g. "Hawaiian from $199" which is one-way USD, not return AUD). Convert all USD leg prices to {{CURRENCY}} (1 USD ≈ 1.55 AUD).
+4. **Strict Inventory Rule**:
+   - ONLY report combinations where every individual leg operates on the designated dates.
+   - If only 1 or 2 viable budget chains exist, ONLY report those. DO NOT fabricate fictitious connections.
+   - If no viable budget combinations connect {{ORIGIN}} and {{DESTINATION}}, state "No budget carrier multi-hop chains found".
+5. Record estimated carry-on & checked baggage fees per carrier leg.
 ```
 
 ---
@@ -228,6 +261,7 @@ You are the **LCC & Multi-Hop Hacker Explorer (`corridor-c-scout`)**.
 
 - **Role**: `Layover Safety & Fare Rules Auditor`
 - **TypeName**: `research`
+- **Recommended Temperature**: `0.0` (Strict deterministic math and safety auditing)
 
 ### Prompt Template
 ```markdown
@@ -240,19 +274,29 @@ You are the **Layover Safety & Fare Rules Auditor (`hacker-stitcher-auditor`)**.
 - **Currency**: {{CURRENCY}}
 
 ### Mandatory Instructions
-1. **Enforce 3-Hour Layover Safety Buffer**:
+1. **Enforce 3-Hour Layover Safety Buffer & International Date Line / UTC Calculation**:
    - Audit all self-transfer and split-ticket combinations proposed by the corridor scouts.
-   - Any self-transfer connection must have a layover of AT LEAST 3.0 hours (or 4.0 hours if changing between different airports, e.g. Haneda to Narita or JFK to Newark). Reject or flag any combination that fails this safety margin.
-2. **True Landed Cost & Baggage Calculation**:
+   - Convert arrival and departure local timestamps to UTC. When crossing the International Date Line (e.g. AU -> USA), passengers arrive on the same or previous local calendar day. Layover MUST be calculated as `Departure UTC - Arrival UTC`.
+   - Any self-transfer connection must have a layover of AT LEAST 3.0 elapsed physical hours (or 4.0 hours if changing between different airports, e.g. Haneda to Narita or JFK to Newark). Reject or flag any combination that fails this safety margin.
+2. **Anti-Teaser Auditing & Per-Leg Arithmetic Proof**:
+   - Enforce that total `net_fare` is mathematically verified: for multi-hop / hacker fares, every separate ticket in `hacker_cart_links` MUST include `estimated_fare` and `currency`. The sum of all leg estimated fares plus checked bag fee MUST equal `net_fare`.
+   - Currency normalization: Ensure all foreign currency figures (e.g. USD) from US carriers (United, Delta, Hawaiian, Southwest) have been converted to {{CURRENCY}}.
+   - Reality check: Any intercontinental long-haul return fare under 950 AUD (620 USD) is almost certainly a one-way teaser snippet. If encountered, recalculate as return ($2 \times \text{one-way} + \text{taxes}$) or set `confidence_tier: "CONFIRMED_SCHEDULE_UNPRICED"` with warning note.
+3. **Strict Inventory & Availability Rule**:
+   - If only a few options (e.g. 1 or 2) are verified from the corridor scouts, ONLY include those verified options in your output.
+   - If NO valid flights are available from any corridor, set combinations to empty `[]`, mark verdict as `NO FLIGHTS AVAILABLE`, and provide a clear notice explaining to the user why (e.g. unserved route, sold out, or seasonal pause).
+4. **True Landed Cost & Baggage Calculation**:
    - Add estimated checked luggage costs for each leg if checked bag mode is requested.
    - Note credit card payment surcharges or OTA booking fees.
-3. **Point-of-Sale (POS) Multi-Currency Arbitrage**:
+5. **Point-of-Sale (POS) Multi-Currency Arbitrage**:
    - Check if pricing the exact itinerary on Skyscanner or airline sites in foreign currencies (e.g., JPY, EUR, USD, BRL) yields a net discount after foreign exchange conversion.
-4. **Transit Visa & Immigration Check**:
+6. **Transit Visa & Immigration Check**:
    - Flag whether intermediate transit points require transit visas or electronic travel authorizations (e.g., US ESTA for US transit, Canada eTA, Japan transit, Schengen visa rules).
-5. **Extract Exact Travel Deal Dates**:
+7. **Extract Exact Travel Deal Dates**:
    - Provide exact `deal_depart_date` (e.g., `2027-08-04`) and `deal_return_date` (e.g., `2027-08-25`) discovered for every combination.
-6. **Generate 1-Click Search Engine URLs**:
+8. **Generate 1-Click Search Engine URLs & Hacker Cart Links**:
+   - In `hacker_cart_links`, provide each separate leg with:
+     `{ "direction": "Outbound|Return", "origin": "XXX", "dest": "YYY", "date": "YYYY-MM-DD", "estimated_fare": 0.0, "currency": "{{CURRENCY}}" }`
    - Construct valid pre-populated search URLs using normalized dates:
      - **Skyscanner**: `https://www.skyscanner.com.au/transport/flights/{{ORIGIN_LOWER}}/{{DEST_LOWER}}/{{YYMMDD_DEP}}/{{YYMMDD_RET}}/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home`
      - **Google Flights**: `https://www.google.com/travel/flights?q=flights%20to%20{{DESTINATION}}%20from%20{{ORIGIN}}%20on%20{{YYYY-MM-DD_DEP}}%20through%20{{YYYY-MM-DD_RET}}&curr={{CURRENCY}}&hl=en`

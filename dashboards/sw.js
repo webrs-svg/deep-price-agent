@@ -1,4 +1,4 @@
-const CACHE_NAME = 'price-scout-pwa-v15';
+const CACHE_NAME = 'price-scout-pwa-v22';
 const ASSETS = [
   './',
   './index.html',

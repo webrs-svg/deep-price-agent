@@ -377,7 +377,7 @@
           <label>Primary AI Model</label>
           <select id="cfg-gemini-model" class="select">
             <option value="auto">Auto (Smart Free-Tier Cascade: 2.5-Flash ➔ 3.5-Lite ➔ 1.5-Flash)</option>
-            <option value="openrouter-free">OpenRouter Free (Llama 3.3 70B ➔ Qwen 2.5 72B ➔ Gemini Free)</option>
+            <option value="openrouter-free">OpenRouter Free Tier (100% Free AI Cascade — $0.00 Cost)</option>
             <option value="gemini-2.5-flash">gemini-2.5-flash (Most Generous: 500 Free Grounded Searches/Day)</option>
             <option value="gemini-3.8-flash">gemini-3.8-flash (Latest Model)</option>
             <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (High-Speed Lite)</option>
@@ -388,7 +388,7 @@
           <label>Backup Free AI Key (OpenRouter Free Tier)</label>
           <input type="password" id="cfg-backup-key" class="input" placeholder="sk-or-v1-... (optional free fallback)" />
           <div style="font-size:0.72rem; color:var(--muted); margin-top:3px;">
-            Free OpenRouter key (e.g. meta-llama/llama-3.3-70b-instruct:free) if Gemini quota is exceeded.
+            Free OpenRouter key. Strictly configured for 100% free model inference ($0.00 cost, zero credits used). For free real-time Google search grounding (500 free queries/day), use a free Gemini API key.
           </div>
         </div>
         <div class="field">
@@ -588,12 +588,41 @@
         </div>
       </div>
 
+      <!-- Forwarding Gateway Hub Optimization Matrix Card -->
+      <div class="card" id="card-forwarding-hubs">
+        <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div class="card-title">🌐 Forwarding Gateway Hub Optimization Matrix (Recursive Discovery)</div>
+            <span style="font-size:0.76rem; color:var(--muted);">Discovers Entry Hubs (Hub X) ➔ Evaluates Forwarding Hubs (Hub Y) ➔ Compares 2-Hop Direct vs 3-Hop Hacker Split Fares</span>
+          </div>
+          <span class="badge badge-purple" id="corridor-count-badge">Dynamic Corridors</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Intermediate Hub (Hub X)</th>
+                <th class="num">Entry Fare (Origin ➔ Hub X)</th>
+                <th>Forwarding Hubs Tested</th>
+                <th>Optimal Forwarding Hub (Hub Y)</th>
+                <th class="num">2-Hop Fare (Origin ➔ X ➔ Dest)</th>
+                <th class="num">3-Hop Fare (Origin ➔ X ➔ Y ➔ Dest)</th>
+                <th>Optimization Verdict</th>
+              </tr>
+            </thead>
+            <tbody id="forwarding-hubs-tbody">
+              <tr><td colspan="7" class="empty-state">Loading corridor analysis...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Flight Results Table -->
       <div class="card">
         <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
           <div>
             <div class="card-title">🏆 Discovered Flight Combinations (Ranked by True Net Fare)</div>
-            <span style="font-size:0.76rem; color:var(--muted);">Skyscanner • Google Flights • Kayak</span>
+            <span style="font-size:0.76rem; color:var(--muted);">Skyscanner • Google Flights • Kayak &nbsp;|&nbsp; ℹ️ Live GDS links reflect real-time seat inventory</span>
           </div>
           <button id="clear-flight-combos-btn" class="btn btn-sm" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; font-size:0.78rem; padding:4px 10px; cursor:pointer;" title="Clear discovered flight combinations">
             🗑️ Clear Combinations
@@ -826,12 +855,1468 @@
   <!-- BEGIN_AGENT_DATA -->
   <script>
     window.PRICE_AGENT_DATA = {
-      "last_updated": "2026-11-02T17:50:00+11:00",
-      "watchlist": [],
-      "offers": [],
-      "flight_watchlist": [],
-      "flight_offers": []
-    };
+  "last_updated": "2026-11-03T19:43:41.501018+11:00",
+  "watchlist": [],
+  "offers": [],
+  "flight_watchlist": [
+    {
+      "id": "syd-sea",
+      "origin": "SYD",
+      "destination": "SEA",
+      "depart_date": "2027-08-10",
+      "return_date": "2027-08-25",
+      "trip_type": "return",
+      "cabin_class": "Economy",
+      "checked_bag": true,
+      "currency": "AUD",
+      "target_price": 1400.0,
+      "best_net_fare": 1384.23,
+      "best_route_summary": "SYD âž” SFO âž” SEA (2-Ticket Hacker Split)",
+      "best_depart_date": "2027-08-10",
+      "best_return_date": "2027-08-25",
+      "best_engine": "RouteStack GDS Split Tickets",
+      "hops": 2,
+      "verdict": "EXCELLENT DEAL",
+      "availability_status": "FLIGHTS_AVAILABLE",
+      "last_checked": "2026-11-03T19:43:41.501018+11:00",
+      "latest_report": "syd-sea-2026-11-03.md",
+      "corridors_analyzed": [
+        {
+          "hub": "NAN",
+          "origin_to_hub_fare": 762.82,
+          "airlines": "Fiji Airways",
+          "forwarding_candidates_tested": [
+            "LAX",
+            "SFO",
+            "HNL"
+          ],
+          "best_forwarding_dest": "None",
+          "forwarding_fare": null,
+          "two_hop_total": 1641.44,
+          "three_hop_total": null,
+          "optimization_verdict": "Direct connection from NAN to SEA available (AUD 1641.44)"
+        },
+        {
+          "hub": "HNL",
+          "origin_to_hub_fare": 848.89,
+          "airlines": "Virgin Au",
+          "forwarding_candidates_tested": [
+            "LAX",
+            "SFO",
+            "YVR"
+          ],
+          "best_forwarding_dest": "None",
+          "forwarding_fare": null,
+          "two_hop_total": 1719.9,
+          "three_hop_total": null,
+          "optimization_verdict": "Direct connection from HNL to SEA available (AUD 1719.9)"
+        },
+        {
+          "hub": "SFO",
+          "origin_to_hub_fare": 848.89,
+          "airlines": "Virgin Au",
+          "forwarding_candidates_tested": [
+            "LAX",
+            "SIN",
+            "HKG"
+          ],
+          "best_forwarding_dest": "None",
+          "forwarding_fare": null,
+          "two_hop_total": 1384.23,
+          "three_hop_total": null,
+          "optimization_verdict": "Direct connection from SFO to SEA available (AUD 1384.23)"
+        }
+      ]
+    }
+  ],
+  "flight_offers": [
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ NAN ➔ SEA (2-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 2,
+      "airlines": "Fiji Airways + Delta",
+      "duration_hours": 18.0,
+      "layovers_summary": "Hacker Split via NAN",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1298.16,
+      "base_fare": 1298.16,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS Split Tickets",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/kgmZRLrQRT1GeJ93_rN9Aw",
+      "check_in_baggage": "0KG / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Outbound / Return Leg 1",
+          "origin": "SYD",
+          "dest": "NAN",
+          "date": "2027-08-10",
+          "estimated_fare": 762.82,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/kgmZRLrQRT1GeJ93_rN9Aw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/nan/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20NAN%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-NAN/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Outbound / Return Leg 2",
+          "origin": "NAN",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 535.34,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/eiBC8xgn4WX2Ca9tynHvTw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/nan/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20NAN%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/NAN-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Hacker Split via NAN"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ LAX ➔ SEA (2-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 2,
+      "airlines": "Alaska Airlines + United",
+      "duration_hours": 18.0,
+      "layovers_summary": "Hacker Split via LAX",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1488.28,
+      "base_fare": 1488.28,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS Split Tickets",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/FCteW7PruIiWf8jm83ONrQ",
+      "check_in_baggage": "2PC / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Outbound / Return Leg 1",
+          "origin": "SYD",
+          "dest": "LAX",
+          "date": "2027-08-10",
+          "estimated_fare": 1078.57,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/FCteW7PruIiWf8jm83ONrQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/lax/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20LAX%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-LAX/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Outbound / Return Leg 2",
+          "origin": "LAX",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 409.71,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/uU1_UJ37AP3TWPe9ddU1wA",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/lax/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20LAX%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/LAX-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Hacker Split via LAX"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ NAN ➔ SFO ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Fiji Airways + American + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via NAN & SFO",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1552.3,
+      "base_fare": 1552.3,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/kgmZRLrQRT1GeJ93_rN9Aw",
+      "check_in_baggage": "0KG / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "NAN",
+          "date": "2027-08-10",
+          "estimated_fare": 762.82,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/kgmZRLrQRT1GeJ93_rN9Aw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/nan/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20NAN%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-NAN/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "NAN",
+          "dest": "SFO",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/da3DFhhakH6XVkRVhtIfgQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/nan/sfo/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SFO%20from%20NAN%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/NAN-SFO/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "SFO",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/wejKk1Gus3D4tkklPQ0Zzw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sfo/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SFO%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SFO-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via NAN & SFO"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ NAN ➔ HNL ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Fiji Airways + American + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via NAN & HNL",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1552.3,
+      "base_fare": 1552.3,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/kgmZRLrQRT1GeJ93_rN9Aw",
+      "check_in_baggage": "0KG / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "NAN",
+          "date": "2027-08-10",
+          "estimated_fare": 762.82,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/kgmZRLrQRT1GeJ93_rN9Aw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/nan/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20NAN%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-NAN/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "NAN",
+          "dest": "HNL",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/Llq7uB42bYm6I_duK2zp2w",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/nan/hnl/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20HNL%20from%20NAN%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/NAN-HNL/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "HNL",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/RHVmD0aK_ile9op-EVrDPg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/hnl/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20HNL%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/HNL-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via NAN & HNL"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ NAN ➔ LAX ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Fiji Airways + Alaska Airlines + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via NAN & LAX",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1557.07,
+      "base_fare": 1557.07,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/kgmZRLrQRT1GeJ93_rN9Aw",
+      "check_in_baggage": "0KG / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "NAN",
+          "date": "2027-08-10",
+          "estimated_fare": 762.82,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/kgmZRLrQRT1GeJ93_rN9Aw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/nan/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20NAN%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-NAN/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "NAN",
+          "dest": "LAX",
+          "date": "2027-08-10",
+          "estimated_fare": 399.51,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/r2oRBxCxjhg-jkOLve1rSg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/nan/lax/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20LAX%20from%20NAN%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/NAN-LAX/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "LAX",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/SwnXBFU91XJX8zBnoDPpGg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/lax/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20LAX%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/LAX-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via NAN & LAX"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ LAX ➔ SFO ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Alaska Airlines + Delta + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via LAX & SFO",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1855.29,
+      "base_fare": 1855.29,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/FCteW7PruIiWf8jm83ONrQ",
+      "check_in_baggage": "2PC / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "LAX",
+          "date": "2027-08-10",
+          "estimated_fare": 1078.57,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/FCteW7PruIiWf8jm83ONrQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/lax/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20LAX%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-LAX/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "LAX",
+          "dest": "SFO",
+          "date": "2027-08-10",
+          "estimated_fare": 381.98,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/8OIDb2iwDHl-46JkCejyFA",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/lax/sfo/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SFO%20from%20LAX%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/LAX-SFO/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "SFO",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/wejKk1Gus3D4tkklPQ0Zzw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sfo/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SFO%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SFO-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via LAX & SFO"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ LAX ➔ SIN ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Alaska Airlines + American + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via LAX & SIN",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1868.05,
+      "base_fare": 1868.05,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/FCteW7PruIiWf8jm83ONrQ",
+      "check_in_baggage": "2PC / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "LAX",
+          "date": "2027-08-10",
+          "estimated_fare": 1078.57,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/FCteW7PruIiWf8jm83ONrQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/lax/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20LAX%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-LAX/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "LAX",
+          "dest": "SIN",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/ARM_anxQ0ri_gy_hMhPMRQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/lax/sin/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SIN%20from%20LAX%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/LAX-SIN/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "SIN",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/t0HaEWF5CpKyJPoA7EjIFQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sin/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SIN%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SIN-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via LAX & SIN"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ LAX ➔ HKG ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Alaska Airlines + American + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via LAX & HKG",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1868.05,
+      "base_fare": 1868.05,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/FCteW7PruIiWf8jm83ONrQ",
+      "check_in_baggage": "2PC / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "LAX",
+          "date": "2027-08-10",
+          "estimated_fare": 1078.57,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/FCteW7PruIiWf8jm83ONrQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/lax/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20LAX%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-LAX/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "LAX",
+          "dest": "HKG",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/sF76E1Lv_gvYHyDfT4Oo5w",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/lax/hkg/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20HKG%20from%20LAX%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/LAX-HKG/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "HKG",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/D6giq80rYIFLLwdvCmnuZw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/hkg/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20HKG%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/HKG-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via LAX & HKG"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 4,
+      "airlines": "Alaska Airlines",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1919.77,
+      "base_fare": 1533.8,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/BBZKwU45cvp9ZJ9tEm1myA",
+      "check_in_baggage": "2PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1919.77,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/BBZKwU45cvp9ZJ9tEm1myA",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 5,
+      "airlines": "Alaska Airlines",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1924.65,
+      "base_fare": 1482.71,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/zHPWsTWIBKbgg6Favc4SVg",
+      "check_in_baggage": "2PC",
+      "remaining_seats": 7,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1924.65,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/zHPWsTWIBKbgg6Favc4SVg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 4,
+      "airlines": "Alaska Airlines",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1924.65,
+      "base_fare": 1482.71,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": null,
+      "check_in_baggage": "2PC",
+      "remaining_seats": 7,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1924.65,
+          "currency": "AUD",
+          "checkout_url": null,
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 4,
+      "airlines": "Alaska Airlines",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1924.65,
+      "base_fare": 1482.71,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": null,
+      "check_in_baggage": "2PC",
+      "remaining_seats": 7,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1924.65,
+          "currency": "AUD",
+          "checkout_url": null,
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 4,
+      "airlines": "Air Canada",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1933.73,
+      "base_fare": 1257.27,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": null,
+      "check_in_baggage": "1 Piece",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1933.73,
+          "currency": "AUD",
+          "checkout_url": null,
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SFO ➔ SEA (2-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 2,
+      "airlines": "Air Canada + Delta",
+      "duration_hours": 18.0,
+      "layovers_summary": "Hacker Split via SFO",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 2131.58,
+      "base_fare": 2131.58,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS Split Tickets",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/1UiXnGkf5x6QZ5m6PXAqwg",
+      "check_in_baggage": "1 Piece / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Outbound / Return Leg 1",
+          "origin": "SYD",
+          "dest": "SFO",
+          "date": "2027-08-10",
+          "estimated_fare": 1596.24,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/1UiXnGkf5x6QZ5m6PXAqwg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sfo/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SFO%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SFO/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Outbound / Return Leg 2",
+          "origin": "SFO",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 535.34,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/WWaX9XS8PQ9Q03kTR1kt3A",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sfo/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SFO%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SFO-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Hacker Split via SFO"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SFO ➔ LAX ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Air Canada + Delta + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via SFO & LAX",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 2372.96,
+      "base_fare": 2372.96,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/1UiXnGkf5x6QZ5m6PXAqwg",
+      "check_in_baggage": "1 Piece / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "SFO",
+          "date": "2027-08-10",
+          "estimated_fare": 1596.24,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/1UiXnGkf5x6QZ5m6PXAqwg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sfo/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SFO%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SFO/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "SFO",
+          "dest": "LAX",
+          "date": "2027-08-10",
+          "estimated_fare": 381.98,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/ipIoPkZcH9RqBgSvHU0VLA",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sfo/lax/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20LAX%20from%20SFO%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SFO-LAX/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "LAX",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/SwnXBFU91XJX8zBnoDPpGg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/lax/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20LAX%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/LAX-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via SFO & LAX"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SFO ➔ SIN ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Air Canada + Delta + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via SFO & SIN",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 2384.37,
+      "base_fare": 2384.37,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/1UiXnGkf5x6QZ5m6PXAqwg",
+      "check_in_baggage": "1 Piece / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "SFO",
+          "date": "2027-08-10",
+          "estimated_fare": 1596.24,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/1UiXnGkf5x6QZ5m6PXAqwg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sfo/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SFO%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SFO/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "SFO",
+          "dest": "SIN",
+          "date": "2027-08-10",
+          "estimated_fare": 393.39,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/ZAFC2vjIFoxwpTeTmiyljA",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sfo/sin/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SIN%20from%20SFO%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SFO-SIN/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "SIN",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/t0HaEWF5CpKyJPoA7EjIFQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sin/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SIN%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SIN-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via SFO & SIN"
+    },
+    {
+      "timestamp": "2026-11-03T19:08:45.616899+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD ➔ SFO ➔ HKG ➔ SEA (3-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 3,
+      "airlines": "Air Canada + Delta + American",
+      "duration_hours": 18.0,
+      "layovers_summary": "3-Hop Hacker Split via SFO & HKG",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (3-Hop Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 2384.37,
+      "base_fare": 2384.37,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS 3-Ticket Split",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/1UiXnGkf5x6QZ5m6PXAqwg",
+      "check_in_baggage": "1 Piece / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Leg 1",
+          "origin": "SYD",
+          "dest": "SFO",
+          "date": "2027-08-10",
+          "estimated_fare": 1596.24,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/1UiXnGkf5x6QZ5m6PXAqwg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sfo/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SFO%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SFO/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 2",
+          "origin": "SFO",
+          "dest": "HKG",
+          "date": "2027-08-10",
+          "estimated_fare": 393.39,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/A-bzu5uVGNlP3nE6oPO9zg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sfo/hkg/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20HKG%20from%20SFO%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SFO-HKG/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Leg 3",
+          "origin": "HKG",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 394.74,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/D6giq80rYIFLLwdvCmnuZw",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/hkg/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20HKG%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/HKG-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "3-Hop Hacker Split via SFO & HKG"
+    },
+    {
+      "timestamp": "2026-11-03T19:43:41.501018+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD âž” SFO âž” SEA (2-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 2,
+      "airlines": "Virgin Au + Delta",
+      "duration_hours": 18.0,
+      "layovers_summary": "Hacker Split via SFO",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1384.23,
+      "base_fare": 1384.23,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS Split Tickets",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/_2Xn5XFgCunENfUNLdlbGg",
+      "check_in_baggage": "1 Piece / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Outbound / Return Leg 1",
+          "origin": "SYD",
+          "dest": "SFO",
+          "date": "2027-08-10",
+          "estimated_fare": 848.89,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/_2Xn5XFgCunENfUNLdlbGg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sfo/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SFO%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SFO/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Outbound / Return Leg 2",
+          "origin": "SFO",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 535.34,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/yWPL0SUqzjAqp1O_FjxabA",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/sfo/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SFO%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SFO-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Hacker Split via SFO"
+    },
+    {
+      "timestamp": "2026-11-03T19:43:41.501018+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD âž” NAN âž” SEA (2-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 2,
+      "airlines": "Fiji Airways + Delta",
+      "duration_hours": 18.0,
+      "layovers_summary": "Hacker Split via NAN",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1641.44,
+      "base_fare": 1641.44,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS Split Tickets",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/LZ3o5E_1DgyatBjNBcRL3A",
+      "check_in_baggage": "0KG / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Outbound / Return Leg 1",
+          "origin": "SYD",
+          "dest": "NAN",
+          "date": "2027-08-10",
+          "estimated_fare": 762.82,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/LZ3o5E_1DgyatBjNBcRL3A",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/nan/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20NAN%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-NAN/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Outbound / Return Leg 2",
+          "origin": "NAN",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 878.62,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/v1f1LYUVKcNFEh2x0sBSsQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/nan/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20NAN%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/NAN-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Hacker Split via NAN"
+    },
+    {
+      "timestamp": "2026-11-03T19:43:41.501018+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD âž” HNL âž” SEA (2-Ticket Hacker Split)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 2,
+      "airlines": "Virgin Au + Delta",
+      "duration_hours": 18.0,
+      "layovers_summary": "Hacker Split via HNL",
+      "safety_buffer_met": true,
+      "ticket_type": "Self-Transfer (Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1719.9,
+      "base_fare": 1719.9,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS Split Tickets",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/EUqqlBlfA30qZAqDu_r8Pg",
+      "check_in_baggage": "1 Piece / 0PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Outbound / Return Leg 1",
+          "origin": "SYD",
+          "dest": "HNL",
+          "date": "2027-08-10",
+          "estimated_fare": 848.89,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/EUqqlBlfA30qZAqDu_r8Pg",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/hnl/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20HNL%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-HNL/2027-08-10?sort=price_a"
+        },
+        {
+          "direction": "Outbound / Return Leg 2",
+          "origin": "HNL",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 871.01,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/l0S1VzOSOOiesV3v3Zt4kA",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/hnl/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20HNL%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/HNL-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Hacker Split via HNL"
+    },
+    {
+      "timestamp": "2026-11-03T19:43:41.501018+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD âž” SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 4,
+      "airlines": "Alaska Airlines",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1919.77,
+      "base_fare": 1533.8,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/h9gKJ836dD8ONC5ztcbbjQ",
+      "check_in_baggage": "2PC",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1919.77,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/h9gKJ836dD8ONC5ztcbbjQ",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:43:41.501018+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD âž” SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 4,
+      "airlines": "Alaska Airlines",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1924.65,
+      "base_fare": 1482.71,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": "https://mcp.routestack.ai/checkout/r/DVm5SXPEDBSsdMWO3-ZVaA",
+      "check_in_baggage": "2PC",
+      "remaining_seats": 7,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1924.65,
+          "currency": "AUD",
+          "checkout_url": "https://mcp.routestack.ai/checkout/r/DVm5SXPEDBSsdMWO3-ZVaA",
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:43:41.501018+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD âž” SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 4,
+      "airlines": "Alaska Airlines",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1924.65,
+      "base_fare": 1482.71,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": null,
+      "check_in_baggage": "2PC",
+      "remaining_seats": 7,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1924.65,
+          "currency": "AUD",
+          "checkout_url": null,
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:43:41.501018+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD âž” SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 5,
+      "airlines": "Alaska Airlines",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1924.65,
+      "base_fare": 1482.71,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": null,
+      "check_in_baggage": "2PC",
+      "remaining_seats": 7,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1924.65,
+          "currency": "AUD",
+          "checkout_url": null,
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    },
+    {
+      "timestamp": "2026-11-03T19:43:41.501018+11:00",
+      "origin": "SYD",
+      "destination": "SEA",
+      "route_summary": "SYD âž” SEA (Single Ticket Unified GDS)",
+      "deal_depart_date": "2027-08-10",
+      "deal_return_date": "2027-08-25",
+      "hops": 4,
+      "airlines": "Air Canada",
+      "duration_hours": 18.0,
+      "layovers_summary": "Benchmark Single Ticket",
+      "safety_buffer_met": true,
+      "ticket_type": "Single Ticket (GDS Wholesale)",
+      "confidence_tier": "LIVE_VERIFIED",
+      "is_live_verified": true,
+      "currency": "AUD",
+      "net_fare": 1933.73,
+      "base_fare": 1257.27,
+      "checked_bag_fee": 0.0,
+      "cheapest_engine": "RouteStack GDS",
+      "checkout_url": null,
+      "check_in_baggage": "1 Piece",
+      "remaining_seats": 4,
+      "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/270825/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+      "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10%20through%202027-08-25&curr=AUD&hl=en",
+      "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10/2027-08-25?sort=price_a",
+      "hacker_cart_links": [
+        {
+          "direction": "Round-Trip",
+          "origin": "SYD",
+          "dest": "SEA",
+          "date": "2027-08-10",
+          "estimated_fare": 1933.73,
+          "currency": "AUD",
+          "checkout_url": null,
+          "skyscanner_url": "https://www.skyscanner.com.au/transport/flights/syd/sea/270810/?adultsv2=1&cabinclass=economy&childrenv2=&preferdirects=false&ref=home",
+          "google_flights_url": "https://www.google.com/travel/flights?q=flights%20to%20SEA%20from%20SYD%20on%202027-08-10&curr=AUD&hl=en",
+          "kayak_url": "https://www.kayak.com.au/flights/SYD-SEA/2027-08-10?sort=price_a"
+        }
+      ],
+      "comparison_verdict": "Benchmark Single Ticket"
+    }
+  ],
+  "corridors_analyzed": [
+    {
+      "hub": "NAN",
+      "origin_to_hub_fare": 762.82,
+      "airlines": "Fiji Airways",
+      "forwarding_candidates_tested": [
+        "LAX",
+        "SFO",
+        "HNL"
+      ],
+      "best_forwarding_dest": "None",
+      "forwarding_fare": null,
+      "two_hop_total": 1641.44,
+      "three_hop_total": null,
+      "optimization_verdict": "Direct connection from NAN to SEA available (AUD 1641.44)"
+    },
+    {
+      "hub": "HNL",
+      "origin_to_hub_fare": 848.89,
+      "airlines": "Virgin Au",
+      "forwarding_candidates_tested": [
+        "LAX",
+        "SFO",
+        "YVR"
+      ],
+      "best_forwarding_dest": "None",
+      "forwarding_fare": null,
+      "two_hop_total": 1719.9,
+      "three_hop_total": null,
+      "optimization_verdict": "Direct connection from HNL to SEA available (AUD 1719.9)"
+    },
+    {
+      "hub": "SFO",
+      "origin_to_hub_fare": 848.89,
+      "airlines": "Virgin Au",
+      "forwarding_candidates_tested": [
+        "LAX",
+        "SIN",
+        "HKG"
+      ],
+      "best_forwarding_dest": "None",
+      "forwarding_fare": null,
+      "two_hop_total": 1384.23,
+      "three_hop_total": null,
+      "optimization_verdict": "Direct connection from SFO to SEA available (AUD 1384.23)"
+    }
+  ]
+};
   </script>
   <!-- END_AGENT_DATA -->
 
@@ -941,6 +2426,13 @@
         const localOffers = JSON.parse(localStorage.getItem('ps_local_offers') || '[]');
         const localFlightWatch = JSON.parse(localStorage.getItem('ps_local_flight_watchlist') || '[]');
         const localFlightOffers = JSON.parse(localStorage.getItem('ps_local_flight_offers') || '[]');
+        if (baseData.flight_offers && baseData.flight_offers.length > 0) {
+          const lastUpdated = baseData.last_updated;
+          const lastCleared = localStorage.getItem('ps_flight_clear_timestamp');
+          if (!lastCleared || (lastUpdated && new Date(lastUpdated) > new Date(lastCleared))) {
+            localStorage.removeItem('ps_hide_base_flight_offers');
+          }
+        }
         const hideBaseFlightOffers = localStorage.getItem('ps_hide_base_flight_offers') === 'true';
         const hideBaseProductOffers = localStorage.getItem('ps_hide_base_product_offers') === 'true';
 
@@ -968,6 +2460,7 @@
           offers: productOffers,
           flight_watchlist: Array.from(mapFW.values()),
           flight_offers: flightOffers,
+          corridors_analyzed: baseData.corridors_analyzed || (baseData.flight_watchlist && baseData.flight_watchlist[0] && baseData.flight_watchlist[0].corridors_analyzed) || [],
         };
       }
 
@@ -1137,6 +2630,8 @@
             origin: (l.origin || '').toUpperCase(),
             dest: (l.dest || '').toUpperCase(),
             date: targetDate,
+            estimated_fare: (l.estimated_fare !== undefined && l.estimated_fare !== null) ? Number(l.estimated_fare) : null,
+            currency: l.currency || currency,
             skyscanner_url: l.skyscanner_url || buildSkyscannerUrl(l.origin, l.dest, targetDate, ''),
             google_flights_url: l.google_flights_url || buildGoogleFlightsUrl(l.origin, l.dest, targetDate, '', currency),
             kayak_url: l.kayak_url || buildKayakUrl(l.origin, l.dest, targetDate, '')
@@ -1147,6 +2642,9 @@
           alert('This is a direct / single flight route. Use the Skyscanner, Google Flights, or Kayak buttons directly.');
           return;
         }
+
+        const totalEstLegs = legs.reduce((sum, l) => sum + (l.estimated_fare || 0), 0);
+        const hasLegEstimates = legs.some(l => l.estimated_fare > 0);
 
         document.getElementById('hm-title').textContent = `🛒 Hacker Booking Cart (${legs.length} Separate Tickets)`;
         document.getElementById('hm-subtitle').textContent = routeSummary || '';
@@ -1162,6 +2660,11 @@
         const qa = document.getElementById('hm-quick-actions');
         qa.innerHTML = `
           <div style="display:flex; flex-direction:column; gap:8px; width:100%;">
+            <div style="background:rgba(30,41,59,0.8); border:1px solid rgba(148,163,184,0.25); border-radius:8px; padding:10px 12px; font-size:0.8rem; color:#94a3b8; line-height:1.4;">
+              <strong style="color:#f59e0b;">ℹ️ Real-Time Seat Inventory Notice:</strong>
+              Search engine snippets often display off-peak teaser fares or one-way lead-in rates. When you click the Skyscanner or Google Flights buttons below, they fetch real-time live seat inventory from airline GDS systems for your exact travel dates.
+              ${hasLegEstimates ? `<div style="margin-top:6px; color:#e2e8f0; font-weight:600;">💰 Estimated Sum of Individual Tickets: ~ ${currency} ${totalEstLegs.toFixed(0)}</div>` : ''}
+            </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
               <button class="btn btn-sm btn-primary" id="open-all-sky-btn">⚡ Open All Skyscanner Tabs (${legs.length})</button>
               <button class="btn btn-sm" id="open-all-goog-btn">⚡ Open All Google Flights Tabs (${legs.length})</button>
@@ -1242,14 +2745,25 @@
           const isRet = l.direction === 'Return';
           const badgeColor = isRet ? 'badge-amber' : 'badge-purple';
           const icon = isRet ? '🛬 Return' : '🛫 Outbound';
+          const estBadge = (l.estimated_fare !== null && l.estimated_fare !== undefined && Number(l.estimated_fare) > 0)
+            ? `<span class="badge" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; font-weight:600;">Est. ~ ${l.currency || currency} ${Number(l.estimated_fare).toFixed(0)}</span>`
+            : '';
+          const directCheckoutBtn = l.checkout_url
+            ? `<a class="btn btn-sm" style="background:#059669; color:#fff; font-weight:700; text-decoration:none; box-shadow:0 0 8px rgba(16,185,129,0.3);" href="${l.checkout_url}" target="_blank" rel="noopener">⚡ Book Instant &rarr;</a>`
+            : '';
+
           return `
             <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:10px; padding:12px;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
                 <strong style="color:#fff; font-size:0.95rem;">Ticket ${idx + 1}: ${l.origin} ➔ ${l.dest}</strong>
-                <span class="badge ${badgeColor}">${icon} (Leg #${idx + 1})</span>
+                <div style="display:flex; gap:6px; align-items:center;">
+                  ${estBadge}
+                  <span class="badge ${badgeColor}">${icon} (Leg #${idx + 1})</span>
+                </div>
               </div>
               <div style="font-size:0.78rem; color:var(--muted); margin-bottom:8px;">Travel Date: 🗓️ ${l.date || (isRet ? retDate : depDate) || 'Flexible'}</div>
               <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                ${directCheckoutBtn}
                 <a class="btn btn-sm btn-primary" href="${l.skyscanner_url}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
                 <a class="btn btn-sm" href="${l.google_flights_url}" target="_blank" rel="noopener">Google Flights &rarr;</a>
                 <a class="btn btn-sm" href="${l.kayak_url}" target="_blank" rel="noopener">Kayak &rarr;</a>
@@ -1270,6 +2784,7 @@
 
       // 5. Render Functions
       const flOffersTbody = document.getElementById('flight-offers-tbody');
+      const fwdHubsTbody = document.getElementById('forwarding-hubs-tbody');
       const flWatchTbody = document.getElementById('flight-watchlist-tbody');
       const flFilterInput = document.getElementById('fl-filter');
       const flRouteFilter = document.getElementById('fl-route-filter');
@@ -1319,6 +2834,44 @@
         });
         if (routes.includes(selRoute)) flRouteFilter.value = selRoute;
 
+        // Render Forwarding Hubs Matrix
+        const corridors = state.corridors_analyzed || [];
+        if (fwdHubsTbody) {
+          if (!corridors || corridors.length === 0) {
+            fwdHubsTbody.innerHTML = '<tr><td colspan="7" class="empty-state">No corridor hubs evaluated yet. Run a search to test intermediate &amp; forwarding hubs!</td></tr>';
+          } else {
+            const cur = (state.flight_watchlist && state.flight_watchlist[0] && state.flight_watchlist[0].currency) || 'AUD';
+            fwdHubsTbody.innerHTML = corridors.map(cr => {
+              const testedBadges = (cr.forwarding_candidates_tested || []).map(h => '<span class="chip" style="font-size:0.72rem; padding:2px 6px;">' + h + '</span>').join(' ') || '<span style="color:var(--muted); font-size:0.75rem;">None</span>';
+              const bestFwdDisplay = cr.best_forwarding_dest && cr.best_forwarding_dest !== 'None'
+                ? '<strong>' + cr.best_forwarding_dest + '</strong> ' + (cr.forwarding_fare ? '<span style="font-size:0.75rem; color:var(--muted);">(' + fmt(cr.forwarding_fare, cur) + ')</span>' : '')
+                : '<span style="color:var(--muted); font-size:0.75rem;">Direct Only</span>';
+              
+              const isFwdCheaper = cr.three_hop_total && cr.two_hop_total && cr.three_hop_total < cr.two_hop_total;
+              const isDirectCheaper = cr.three_hop_total && cr.two_hop_total && cr.two_hop_total <= cr.three_hop_total;
+              
+              let verdictBadge = '';
+              if (isFwdCheaper) {
+                verdictBadge = '<span class="badge badge-blue" style="margin-right:6px;">🚀 Forwarding Saves</span>';
+              } else if (isDirectCheaper) {
+                verdictBadge = '<span class="badge badge-green" style="margin-right:6px;">✅ Direct Cheaper</span>';
+              } else if (cr.two_hop_total) {
+                verdictBadge = '<span class="badge badge-purple" style="margin-right:6px;">⭐ Gateway</span>';
+              }
+
+              return '<tr>' +
+                '<td><strong>' + cr.hub + '</strong> <span style="font-size:0.75rem; color:var(--muted);">' + (cr.airlines || '') + '</span></td>' +
+                '<td class="num font-mono">' + fmt(cr.origin_to_hub_fare, cur) + '</td>' +
+                '<td><div style="display:flex; gap:4px; flex-wrap:wrap;">' + testedBadges + '</div></td>' +
+                '<td>' + bestFwdDisplay + '</td>' +
+                '<td class="num font-mono">' + (cr.two_hop_total ? fmt(cr.two_hop_total, cur) : '—') + '</td>' +
+                '<td class="num font-mono" style="' + (isFwdCheaper ? 'color:var(--green); font-weight:700;' : '') + '">' + (cr.three_hop_total ? fmt(cr.three_hop_total, cur) : '—') + '</td>' +
+                '<td style="font-size:0.8rem;">' + verdictBadge + '<span>' + (cr.optimization_verdict || '—') + '</span></td>' +
+              '</tr>';
+            }).join('');
+          }
+        }
+
         document.getElementById('kpi-fl-routes').textContent = state.flight_watchlist.length;
         document.getElementById('kpi-fl-combos').textContent = state.flight_offers.length;
         document.getElementById('kpi-fl-luggage').textContent = toggleCheckedBag.checked ? '+1 Checked Bag' : 'Carry-On Only';
@@ -1327,20 +2880,32 @@
           flWatchTbody.innerHTML = '<tr><td colspan="8" class="empty-state">No flight routes tracked yet. Enter an Origin &amp; Destination above and tap <strong>⚡ Run 5 Flight Subagents Live Now</strong>!</td></tr>';
         } else {
           flWatchTbody.innerHTML = state.flight_watchlist.map(f => {
+            const isNoneAvail = f.availability_status === 'NONE_AVAILABLE' || f.verdict === 'NO FLIGHTS AVAILABLE';
             const hit = f.best_net_fare && f.target_price && f.best_net_fare <= f.target_price;
-            const badge = hit
-              ? '<span class="badge badge-green">🔥 TARGET HIT</span>'
-              : `<span class="badge badge-amber">${f.verdict || 'WATCHING'}</span>`;
-            const dateDisplay = (f.best_depart_date && f.best_return_date)
+            let badge = '';
+            if (isNoneAvail) {
+              badge = '<span class="badge badge-red">⚠️ NO FLIGHTS</span>';
+            } else if (hit) {
+              badge = '<span class="badge badge-green">🔥 TARGET HIT</span>';
+            } else {
+              badge = `<span class="badge badge-amber">${f.verdict || 'WATCHING'}</span>`;
+            }
+            const fareDisplay = isNoneAvail
+              ? '<span style="color:var(--muted); font-size:0.75rem;">None Available</span>'
+              : fmt(f.best_net_fare, f.currency);
+            const dateDisplay = (f.best_depart_date && f.best_return_date && !isNoneAvail)
               ? `<div>${f.depart_date || 'Flexible'}</div><div style="font-size:0.72rem; color:var(--primary); font-weight:600; margin-top:2px;">Deal: ${f.best_depart_date} → ${f.best_return_date}</div>`
               : (f.depart_date || '—');
+            const summaryDisplay = isNoneAvail
+              ? `<div style="font-size:0.8rem; color:var(--red); font-weight:600;">No Flights Operating / Available</div>${f.user_notice ? `<div style="font-size:0.72rem; color:var(--muted); margin-top:2px;">${f.user_notice}</div>` : ''}`
+              : `<div style="font-size:0.8rem; font-weight:600;">${f.best_route_summary || '—'}</div>`;
             return `<tr>
               <td><strong>${f.origin} ➔ ${f.destination}</strong></td>
               <td>${dateDisplay}</td>
               <td>${f.trip_type || 'return'}</td>
               <td class="num">${fmt(f.target_price, f.currency)}</td>
-              <td class="num net-price">${fmt(f.best_net_fare, f.currency)}</td>
-              <td><div style="font-size:0.8rem; font-weight:600;">${f.best_route_summary || '—'}</div></td>
+              <td class="num net-price">${fareDisplay}</td>
+              <td>${summaryDisplay}</td>
               <td>${badge}</td>
               <td style="font-size:0.75rem; color:var(--muted);">${f.last_checked || '—'}</td>
             </tr>`;
@@ -1392,13 +2957,34 @@
             const customLegsEncoded = encodeURIComponent(JSON.stringify(f.hacker_cart_links || legs));
             const routeSummaryEncoded = encodeURIComponent(f.route_summary || `${f.origin} ➔ ${f.destination}`);
 
-            const verifiedBadge = f.is_live_verified
-              ? '<span class="badge badge-green" style="margin-left:4px;">🟢 Live Verified</span>'
+            let verifiedBadge = '';
+            if (f.confidence_tier === 'LIVE_VERIFIED' || f.is_live_verified) {
+              verifiedBadge = '<span class="badge badge-green" style="margin-left:4px;">🟢 Live Verified</span>';
+            } else if (f.confidence_tier === 'CONFIRMED_SCHEDULE_UNPRICED') {
+              verifiedBadge = '<span class="badge badge-amber" style="margin-left:4px;">📅 Schedule Only</span>';
+            }
+
+            const fareVal = Number(f.net_fare || f.dynamic_fare || 0);
+            const isLowLongHaul = fareVal > 0 && fareVal < 950 && (Number(f.hops) > 1 || /return|round-trip/i.test(f.route_summary || ''));
+            const teaserWarning = (isLowLongHaul || f.confidence_tier === 'CONFIRMED_SCHEDULE_UNPRICED')
+              ? `<div style="font-size:0.73rem; color:#f59e0b; margin-top:3px; font-weight:500;">⚠️ Verify Live Fare on Skyscanner (May be teaser or single leg)</div>`
+              : '';
+
+            const checkoutBtn = f.checkout_url
+              ? `<a class="btn btn-sm" style="background:#059669; color:#fff; font-weight:700; text-decoration:none; box-shadow:0 0 10px rgba(16,185,129,0.4);" href="${f.checkout_url}" target="_blank" rel="noopener">⚡ Book Direct &rarr;</a>`
+              : '';
+
+            const baggageBadge = f.check_in_baggage
+              ? `<span class="badge" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; font-size:0.7rem;" title="Checked baggage allowance">🧳 ${f.check_in_baggage}</span>`
+              : '';
+            const seatsBadge = f.remaining_seats
+              ? `<span class="badge" style="background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.3); color:#fbbf24; font-size:0.7rem;" title="Live remaining seats">🔥 ${f.remaining_seats} Left</span>`
               : '';
 
             return `<tr>
               <td>
                 <strong style="color:var(--text); font-size:0.92rem;">${f.route_summary || `${f.origin} ➔ ${f.destination}`}</strong>
+                ${teaserWarning}
                 ${f.visa_warnings ? `<div style="font-size:0.75rem; color:var(--amber); margin-top:2px;">⚠️ ${f.visa_warnings}</div>` : ''}
               </td>
               <td>
@@ -1409,7 +2995,10 @@
                 <span class="badge badge-purple">${f.hops || 1} ${Number(f.hops) === 1 ? 'Direct' : 'Flights'}</span>
                 ${verifiedBadge}
               </td>
-              <td><strong>${f.airlines || '—'}</strong></td>
+              <td>
+                <strong>${f.airlines || '—'}</strong>
+                <div style="display:flex; gap:4px; margin-top:3px; flex-wrap:wrap;">${baggageBadge}${seatsBadge}</div>
+              </td>
               <td>
                 <div>${f.duration_hours ? `${f.duration_hours}h total` : '—'}</div>
                 <div style="font-size:0.75rem; color:var(--muted);">${f.layovers_summary || 'Direct non-stop'} ${safeBadge}</div>
@@ -1419,6 +3008,7 @@
               <td style="font-size:0.78rem;">${f.cheapest_engine || 'Skyscanner'}</td>
               <td>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  ${checkoutBtn}
                   <a class="btn btn-sm btn-primary" href="${skyUrl}" target="_blank" rel="noopener">Skyscanner &rarr;</a>
                   <a class="btn btn-sm" href="${googUrl}" target="_blank" rel="noopener">Google Flights &rarr;</a>
                   <a class="btn btn-sm" href="${kayakUrl}" target="_blank" rel="noopener">Kayak &rarr;</a>
@@ -1552,6 +3142,7 @@
         } else {
           localStorage.setItem('ps_local_flight_offers', '[]');
           localStorage.setItem('ps_hide_base_flight_offers', 'true');
+          localStorage.setItem('ps_flight_clear_timestamp', new Date().toISOString());
           if (baseData.flight_offers) baseData.flight_offers = [];
         }
 
@@ -1609,20 +3200,21 @@
         render();
       });
 
-      // 6. Gemini API Execution Functions (Free-Tier Fallback Chain)
+      // 6. Gemini API Execution Functions (Free-Tier Fallback Chain with Role Temperature Tuning)
       const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 
-      async function callGeminiSingleAttempt(apiKey, modelName, prompt, jsonMode, useGrounding) {
+      async function callGeminiSingleAttempt(apiKey, modelName, prompt, jsonMode, useGrounding, customTemperature = null) {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const temp = customTemperature !== null ? customTemperature : (jsonMode ? 0.1 : 0.2);
         const body = jsonMode
           ? {
               contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: 'application/json', temperature: 0.1 }
+              generationConfig: { responseMimeType: 'application/json', temperature: temp }
             }
           : {
               contents: [{ parts: [{ text: prompt }] }],
               ...(useGrounding ? { tools: [{ google_search: {} }] } : {}),
-              generationConfig: { temperature: 0.2 }
+              generationConfig: { temperature: temp }
             };
         const res = await fetch(url, {
           method: 'POST',
@@ -1652,16 +3244,25 @@
         return text;
       }
 
-      async function callOpenRouterFree(apiKey, prompt, jsonMode = false) {
+      async function callOpenRouterFree(apiKey, prompt, jsonMode = false, customTemperature = null) {
+        const temp = customTemperature !== null ? customTemperature : (jsonMode ? 0.1 : 0.2);
         const candidateModels = [
-          'meta-llama/llama-3.3-70b-instruct:free',
-          'qwen/qwen-2.5-72b-instruct:free',
-          'google/gemini-2.0-flash-lite-001:free',
-          'openrouter/free'
+          'openrouter/free',
+          'nvidia/nemotron-3.5-lightning:free',
+          'google/gemma-4-31b-it:free',
+          'google/gemma-4-26b-a4b-it:free',
+          'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'
         ];
         let lastErr = null;
         for (const m of candidateModels) {
           try {
+            // Strictly 100% free payload: NO paid plugins or tools to guarantee $0.00 cost
+            const bodyPayload = {
+              model: m,
+              messages: [{ role: 'user', content: prompt }],
+              temperature: temp,
+              ...(jsonMode ? { response_format: { type: 'json_object' } } : {})
+            };
             const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
               method: 'POST',
               headers: {
@@ -1670,19 +3271,15 @@
                 'HTTP-Referer': 'https://webrs-svg.github.io/deep-price-agent/',
                 'X-Title': 'Deep Price & Flight Agent'
               },
-              body: JSON.stringify({
-                model: m,
-                messages: [{ role: 'user', content: prompt }],
-                temperature: jsonMode ? 0.1 : 0.2,
-                ...(jsonMode ? { response_format: { type: 'json_object' } } : {})
-              })
+              body: JSON.stringify(bodyPayload)
             });
             if (res.ok) {
               const data = await res.json();
               const txt = (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
               if (txt) return txt;
             } else {
-              lastErr = new Error(`OpenRouter (${res.status}) on ${m}: ${await res.text()}`);
+              const errText = await res.text();
+              lastErr = new Error(`OpenRouter (${res.status}) on ${m}: ${errText}`);
             }
           } catch (e) {
             lastErr = e;
@@ -1691,7 +3288,7 @@
         throw lastErr || new Error('All OpenRouter free models failed');
       }
 
-      async function callGeminiGrounded(apiKeysStr, prompt, jsonMode = false) {
+      async function callGeminiGrounded(apiKeysStr, prompt, jsonMode = false, customTemperature = null) {
         const backupKey = localStorage.getItem('ps_backup_key') || '';
         const pref = localStorage.getItem('ps_gemini_model') || 'auto';
 
@@ -1701,7 +3298,7 @@
         // If user explicitly selected OpenRouter or only has an OpenRouter key
         if ((pref === 'openrouter-free' || keys.length === 0) && backupKey && backupKey.startsWith('sk-or-')) {
           try {
-            return await callOpenRouterFree(backupKey, prompt, jsonMode);
+            return await callOpenRouterFree(backupKey, prompt, jsonMode, customTemperature);
           } catch (orErr) {
             if (keys.length === 0) throw orErr;
             console.warn('[OpenRouter Primary Failed, falling back to Gemini]', orErr);
@@ -1747,7 +3344,7 @@
           for (let i = 0; i < uniqueAttempts.length; i++) {
             const { model, ground } = uniqueAttempts[i];
             try {
-              return await callGeminiSingleAttempt(currentKey, model, prompt, jsonMode, ground);
+              return await callGeminiSingleAttempt(currentKey, model, prompt, jsonMode, ground, customTemperature);
             } catch (err) {
               lastErr = err;
               const msg = String(err.rawText || err.message || '');
@@ -1771,7 +3368,7 @@
         if (backupKey && backupKey.startsWith('sk-or-')) {
           try {
             console.log('[OpenRouter Fallback] Calling free OpenRouter model...');
-            return await callOpenRouterFree(backupKey, prompt, jsonMode);
+            return await callOpenRouterFree(backupKey, prompt, jsonMode, customTemperature);
           } catch (orErr) {
             console.warn('[OpenRouter Fallback Error]', orErr);
           }
@@ -1785,9 +3382,14 @@
           for (const key of keys) {
             for (const ugModel of ungroundedModels) {
               try {
-                const resText = await callGeminiSingleAttempt(key, ugModel, prompt, false, false);
+                const resText = await callGeminiSingleAttempt(key, ugModel, prompt, false, false, customTemperature);
                 return resText + '\n\n> ⚠️ *Search Grounding Quota Exceeded on Free Key: Route & schedule synthesized using airline timetable knowledge. Confirm live fares with the 1-click links below.*';
               } catch (e) {
+                // continue to next ungrounded model
+              }
+            }
+          }
+        }
                 // continue to next ungrounded model
               }
             }
@@ -1850,51 +3452,79 @@
         try {
           const isReturn = tripType === 'return';
 
-          // Step 1: Run Departure Hub Mapper first to discover real routes from departure airport
+          // Step 1: Run Departure Hub Mapper first (temp 0.1)
           const mapperPrompt = `You are Subagent F1 (departure-hub-mapper).
 Target Route: ${origin} to ${dest}.
 Trip Type: ${isReturn ? `RETURN / ROUND-TRIP (Outbound: around ${departDate}, Inbound Return: around ${returnDate})` : `ONE-WAY (around ${departDate})`}.
 Identify direct flights and map viable transit hubs connecting ${origin} and ${dest} in ${isReturn ? 'BOTH outbound and return directions' : 'outbound direction'}.
 Partition the globe into 3 corridors:
-- Corridor A (Direct & Major Alliance)
-- Corridor B (Continental Mega-Hubs e.g. Tokyo, Seoul, Singapore, Dubai, Doha, London, LAX)
-- Corridor C (Low-Cost Carriers & 2/3/4 Hops via secondary hubs e.g. Jetstar, Zipair, Scoot, AirAsia, Southwest, Volaris).`;
-          const mapperOut = await callGeminiGrounded(apiKey, mapperPrompt);
+- Corridor A (Direct & Major Alliance: non-stop flights and closest major alliance gateway hubs along the direct path)
+- Corridor B (Continental Mega-Hubs: Tokyo, Seoul, Singapore, Dubai, Doha, London, LAX, etc.)
+- Corridor C (Low-Cost Carriers & 2/3/4 Hops via secondary hubs: Jetstar, Scoot, Zipair, AirAsia, Southwest, Volaris, Alaska, etc.)
+STRICT INVENTORY RULE: If ${origin} has no scheduled international routes connecting towards ${dest}, note this explicitly.`;
+          const mapperOut = await callGeminiGrounded(apiKey, mapperPrompt, false, 0.1);
           setPillState('st-fl-mapper', 'st-fl-mapper-badge', 'done', 'Mapped ✓');
 
-          // Step 2: Feed mapped hubs into Corridor Scouts A, B, and C
-          setPillState('st-fl-a', 'st-fl-a-badge', 'running', 'Searching...');
-          setPillState('st-fl-b', 'st-fl-b-badge', 'running', 'Searching...');
-          setPillState('st-fl-c', 'st-fl-c-badge', 'running', 'Hunting...');
+          // Step 2: Feed mapped hubs into Corridor Scouts A, B, and C with role-calibrated temperatures
+          setPillState('st-fl-a', 'st-fl-a-badge', 'running', 'Searching (Temp 0.1)...');
+          setPillState('st-fl-b', 'st-fl-b-badge', 'running', 'Searching (Temp 0.2)...');
+          setPillState('st-fl-c', 'st-fl-c-badge', 'running', 'Hunting (Temp 0.35)...');
 
           const corridorAPrompt = `You are Subagent F2 (corridor-a-scout). Search live direct flights and standard 1-stop single-ticket airline alliance routes between ${origin} and ${dest}.
 Trip Type: ${isReturn ? `RETURN / ROUND-TRIP (Outbound: around ${departDate}, Return: around ${returnDate})` : `ONE-WAY (around ${departDate})`}.
-${isReturn ? `CRITICAL: Search for the FULL RETURN JOURNEY (Outbound + Return) and verify total return pricing in ${currency} on Skyscanner, Google Flights, and Kayak.` : `Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`}
+${isReturn ? `NETWORK AIRLINE ROUND-TRIP PRICING MANDATE: Legacy network alliance carriers (Qantas, United, ANA, Singapore Airlines, Emirates, Delta, BA) price round-trips as a single bundled fare. Do NOT quote separate one-way tickets on legacy carriers for return travel. Search and report the total round-trip pricing in ${currency} on Skyscanner, Google Flights, and Kayak.` : `Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`}
+
+ANTI-TEASER & CURRENCY NORMALIZATION MANDATE:
+- DO NOT copy headline teaser rates (e.g. "from $799*" or "each way based on round-trip purchase"). If return travel is requested, ensure the fare covers BOTH outbound and return (minimum 2x one-way fare + taxes).
+- Identify currency: US airline sites and US aggregator snippets (United, Delta, Hawaiian, Southwest) quote in USD. You MUST convert USD to ${currency} (1 USD ≈ 1.55 AUD). Never quote USD as AUD.
+
+STRICT INVENTORY & ZERO-HALLUCINATION RULE:
+- ONLY report flights that genuinely exist in search results or official airline schedules.
+- If only 1 or 2 options exist on these dates, ONLY return those 1 or 2 options. DO NOT invent synthetic flights.
+- If NO direct or 1-stop alliance flights exist, state clearly: "No direct or 1-stop alliance flights available on these dates."
 
 ### Discovered Hubs from departure-hub-mapper:
 ${mapperOut}`;
 
           const corridorBPrompt = `You are Subagent F3 (corridor-b-scout). Search live 2- and 3-flight combinations between ${origin} and ${dest} through major continental mega-hubs (e.g. Tokyo Narita/Haneda, Seoul Incheon, Singapore, Dubai, Doha, London Heathrow, Los Angeles, etc.).
 Trip Type: ${isReturn ? `RETURN / ROUND-TRIP (Outbound: around ${departDate}, Return: around ${returnDate})` : `ONE-WAY (around ${departDate})`}.
-${isReturn ? `CRITICAL: Explore routes for BOTH the outbound journey (${origin} ➔ ${dest}) and the inbound return journey (${dest} ➔ ${origin}). Verify total round-trip pricing in ${currency}.` : `Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`}
+${isReturn ? `Explore routes for BOTH outbound (${origin} ➔ ${dest}) and inbound return (${dest} ➔ ${origin}). Verify total round-trip pricing in ${currency}.` : `Check Skyscanner, Google Flights, and Kayak for live pricing in ${currency}.`}
+
+ANTI-TEASER & CURRENCY NORMALIZATION MANDATE:
+- Verify that fares quoted cover the complete journey in ${currency}. Convert foreign currencies (e.g. USD, EUR) to ${currency}.
+- Do NOT quote one-way teaser headlines as full return fares.
+
+STRICT INVENTORY RULE:
+- Only include flights actually operated and available on these dates. If only a few exist, list only those. If none are found, state "No mega-hub combinations found".
+- Ensure connecting layovers are at least 3 hours for self-transfers (or standard legal MCT for single-ticket bookings).
 
 ### Discovered Mega-Hubs from departure-hub-mapper:
 ${mapperOut}`;
 
           const corridorCPrompt = `You are Subagent F4 (corridor-c-scout). Explore low-cost carriers (Jetstar, Zipair, Scoot, AirAsia, Southwest, Volaris, Alaska, WestJet, Ryanair, Wizz, EasyJet) and test 2-, 3-, or 4-flight hacker chains between ${origin} and ${dest}.
 Trip Type: ${isReturn ? `RETURN / ROUND-TRIP (Outbound: around ${departDate}, Return: around ${returnDate})` : `ONE-WAY (around ${departDate})`}.
-${isReturn ? `CRITICAL: Map multi-hop chains for BOTH Outbound (${departDate}) and Inbound Return (${returnDate}). Sum up ticket costs for the COMPLETE RETURN TRIP in ${currency}.` : `Calculate the sum of individual tickets in ${currency}.`}
+${isReturn ? `Map multi-hop chains for BOTH Outbound (${departDate}) and Inbound Return (${returnDate}). Budget carriers price point-to-point legs independently and additively: sum individual leg costs for the complete return trip in ${currency}.` : `Calculate the sum of individual tickets in ${currency}.`}
+
+POINT-TO-POINT PRICING & PER-LEG ARITHMETIC MANDATE:
+- Budget carriers price each flight leg independently. You must estimate the price for EVERY individual leg in ${currency}.
+- The total fare MUST equal the sum of all individual legs. NEVER guess an arbitrary low total price!
+- Beware teaser rates: e.g. "Hawaiian from $199" is one-way USD, not return AUD. Convert USD to ${currency} (1 USD ≈ 1.55 AUD).
+
+STRICT INVENTORY RULE:
+- ONLY report combinations where each leg operates on the designated dates.
+- If only 1 or 2 viable budget chains exist, ONLY report those. DO NOT fabricate fictitious connections.
+- If no viable budget combinations exist, state "No budget carrier multi-hop chains found".
 
 ### Secondary Transit Hubs from departure-hub-mapper:
 ${mapperOut}`;
 
           const [corridorAOut, corridorBOut, corridorCOut] = await Promise.all([
-            callGeminiGrounded(apiKey, corridorAPrompt).then(r => { setPillState('st-fl-a', 'st-fl-a-badge', 'done', 'Done ✓'); return r; }),
-            sleep(400).then(() => callGeminiGrounded(apiKey, corridorBPrompt)).then(r => { setPillState('st-fl-b', 'st-fl-b-badge', 'done', 'Done ✓'); return r; }),
-            sleep(800).then(() => callGeminiGrounded(apiKey, corridorCPrompt)).then(r => { setPillState('st-fl-c', 'st-fl-c-badge', 'done', 'Done ✓'); return r; })
+            callGeminiGrounded(apiKey, corridorAPrompt, false, 0.1).then(r => { setPillState('st-fl-a', 'st-fl-a-badge', 'done', 'Done ✓'); return r; }),
+            sleep(400).then(() => callGeminiGrounded(apiKey, corridorBPrompt, false, 0.2)).then(r => { setPillState('st-fl-b', 'st-fl-b-badge', 'done', 'Done ✓'); return r; }),
+            sleep(800).then(() => callGeminiGrounded(apiKey, corridorCPrompt, false, 0.35)).then(r => { setPillState('st-fl-c', 'st-fl-c-badge', 'done', 'Done ✓'); return r; })
           ]);
 
-          setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', 'running', 'Auditing 3h Layovers...');
+          setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', 'running', 'Auditing 3h Layovers & Inventory...');
 
           const stitchPrompt = `You are Subagent F5 (hacker-stitcher-auditor) and Lead Flight Route Synthesizer following AGENTS.md.
 Trip Type: ${isReturn ? 'RETURN / ROUND-TRIP' : 'ONE-WAY'}.
@@ -1904,18 +3534,27 @@ ${isReturn ? `Inbound Return: around ${returnDate}.` : ''}
 Cabin: ${cabin}, Currency: ${currency}, Luggage: ${checkedBag ? '1 Checked Bag Included' : 'Carry-on Only'}.
 
 CRITICAL MANDATES:
+1. STRICT INVENTORY HONESTY: Only use flights genuinely found in the corridor reports.
+   - If only a few options (e.g. 1 or 2) are available, ONLY return those few genuine options. Do NOT fabricate extra flights or pad the list!
+   - If NO valid flights are available from any corridor, state "availability_status": "NONE_AVAILABLE", set "combinations": [], "verdict": "NO FLIGHTS AVAILABLE", and explain clearly in "user_notice" why (e.g., no scheduled flights on these dates, route not operated, or sold out).
+2. ANTI-TEASER AUDITING & PER-LEG ARITHMETIC PROOF:
+   - For all multi-hop combinations (2+ flights), every separate leg in "hacker_cart_links" MUST specify "estimated_fare" (number in ${currency}) and "currency".
+   - The mathematical sum of all leg "estimated_fare" values + "checked_bag_fee" MUST equal "net_fare". Do NOT output an unrealistic bundle total that is less than the sum of the tickets!
+   - Convert all USD quotes from US airlines (Hawaiian, Southwest, United, Delta) to ${currency} (1 USD ≈ 1.55 AUD).
+   - REALITY CHECK: Any transpacific or Europe-Oceania return flight with taxes under 950 AUD (620 USD) is almost certainly a one-way teaser snippet or excludes taxes. If found, recalculate as return (2x one-way + taxes) or label as "confidence_tier": "CONFIRMED_SCHEDULE_UNPRICED" with a clear warning note.
+3. INTERNATIONAL DATE LINE & UTC ELAPSED TIME: Layover durations must be calculated in elapsed physical hours (Departure UTC - Arrival UTC). Transpacific flights crossing the date line arrive on the same or previous calendar day! Ensure all self-transfer connections have AT LEAST 3.0 elapsed physical hours (4.0h for airport changes). Reject or flag any combination that fails this safety margin.
+4. PRICING ASYMMETRY: For return trips, legacy alliance carriers must be priced as a full round-trip fare. Low-cost carriers (Corridor C) are priced by summing individual point-to-point legs.
 ${isReturn ? `
-1. ROUND-TRIP PRICING: All fares (base_fare, net_fare, skyscanner_price, google_flights_price, kayak_price) MUST BE FOR THE ENTIRE ROUND-TRIP / RETURN JOURNEY, NOT one-way!
-2. ROUTE SUMMARY: For return trips, route_summary MUST clearly describe both outbound and return paths, e.g.:
+5. ROUND-TRIP PRICING: All fares (base_fare, net_fare, skyscanner_price, google_flights_price, kayak_price) MUST BE FOR THE ENTIRE ROUND-TRIP / RETURN JOURNEY, NOT one-way!
+6. ROUTE SUMMARY: For return trips, route_summary MUST clearly describe both outbound and return paths, e.g.:
    "Outbound: ${origin} ➔ HNL ➔ ${dest} (${departDate}) | Return: ${dest} ➔ YVR ➔ ${origin} (${returnDate})"
    (or for direct: "${origin} ⇄ ${dest} Direct Round-Trip").
-3. HACKER CART LINKS (hacker_cart_links): Provide all individual flight legs for BOTH Outbound and Return! Each leg must have "direction" ("Outbound" or "Return"), "origin", "dest", and exact "date".
+7. HACKER CART LINKS (hacker_cart_links): Provide all individual flight legs for BOTH Outbound and Return! Each leg must have "direction" ("Outbound" or "Return"), "origin", "dest", "date", "estimated_fare", and "currency".
 ` : `
-1. ONE-WAY PRICING: Calculate net fare from ${origin} to ${dest}.
-2. Provide individual flight legs in hacker_cart_links.
+5. ONE-WAY PRICING: Calculate net fare from ${origin} to ${dest}.
+6. Provide individual flight legs in hacker_cart_links with "estimated_fare" and "currency".
 `}
-4. Enforce 3.0h safety layover buffer on all self-transfers.
-5. Audit baggage policies, credit card surcharges, and transit visa requirements.
+8. Audit baggage policies, credit card surcharges, and transit visa requirements.
 Return ONLY valid JSON matching this exact structure:
 {
   "best_route_summary": "${isReturn ? 'Outbound: ' + origin + ' ➔ ... ➔ ' + dest + ' | Return: ' + dest + ' ➔ ... ➔ ' + origin : origin + ' ➔ ... ➔ ' + dest}",
@@ -1923,7 +3562,9 @@ Return ONLY valid JSON matching this exact structure:
   "best_return_date": "${isReturn ? 'Exact return date e.g. 2027-08-25' : 'One-Way'}",
   "best_net_fare": 0.0,
   "best_engine": "Skyscanner",
-  "verdict": "EXCELLENT DEAL | GOOD FARE | EXPENSIVE / WAIT",
+  "verdict": "EXCELLENT DEAL | GOOD FARE | EXPENSIVE / WAIT | NO FLIGHTS AVAILABLE",
+  "availability_status": "FLIGHTS_AVAILABLE | FEW_FLIGHTS_AVAILABLE | NONE_AVAILABLE",
+  "user_notice": "Clear explanation to user if few or no flights were found, or null",
   "deal_booking_guide": ["Step 1...", "Step 2..."],
   "combinations": [
     {
@@ -1936,6 +3577,7 @@ Return ONLY valid JSON matching this exact structure:
       "layovers_summary": "Hub (3.5h)",
       "safety_buffer_met": true,
       "ticket_type": "Single Ticket (Protected) | Self-Transfer (Hacker Fare)",
+      "confidence_tier": "LIVE_VERIFIED | CONFIRMED_SCHEDULE_UNPRICED",
       "base_fare": 0.0,
       "checked_bag_fee": 0.0,
       "net_fare": 0.0,
@@ -1947,9 +3589,9 @@ Return ONLY valid JSON matching this exact structure:
       "google_flights_url": "https://...",
       "kayak_url": "https://...",
       "hacker_cart_links": [
-        { "direction": "Outbound", "origin": "${origin}", "dest": "HNL", "date": "2027-08-04" },
-        { "direction": "Outbound", "origin": "HNL", "dest": "${dest}", "date": "2027-08-05" },
-        ${isReturn ? `{ "direction": "Return", "origin": "${dest}", "dest": "${origin}", "date": "2027-08-25" }` : ''}
+        { "direction": "Outbound", "origin": "${origin}", "dest": "HNL", "date": "2027-08-04", "estimated_fare": 450.0, "currency": "${currency}" },
+        { "direction": "Outbound", "origin": "HNL", "dest": "${dest}", "date": "2027-08-05", "estimated_fare": 280.0, "currency": "${currency}" },
+        ${isReturn ? `{ "direction": "Return", "origin": "${dest}", "dest": "${origin}", "date": "2027-08-25", "estimated_fare": 650.0, "currency": "${currency}" }` : ''}
       ],
       "visa_warnings": "Transit visa notes",
       "pos_arbitrage_note": "Currency notes"
@@ -1966,11 +3608,13 @@ ${corridorBOut}
 --- CORRIDOR C ---
 ${corridorCOut}`;
 
-          const rawJson = await callGeminiGrounded(apiKey, stitchPrompt, true);
+          const rawJson = await callGeminiGrounded(apiKey, stitchPrompt, true, 0.0);
           const result = parseJsonSafe(rawJson);
           setPillState('st-fl-stitcher', 'st-fl-stitcher-badge', 'done', 'Complete ✓');
 
           const nowStr = new Date().toLocaleString();
+          const isNoneAvailable = result.availability_status === 'NONE_AVAILABLE' || !result.combinations || result.combinations.length === 0;
+
           const localWatch = JSON.parse(localStorage.getItem('ps_local_flight_watchlist') || '[]');
           const newRoute = {
             origin: origin,
@@ -1984,10 +3628,12 @@ ${corridorCOut}`;
             checked_bag: checkedBag,
             currency: currency,
             target_price: targetFare,
-            best_net_fare: result.best_net_fare,
-            best_route_summary: result.best_route_summary,
-            best_engine: result.best_engine,
-            verdict: result.verdict,
+            best_net_fare: isNoneAvailable ? null : result.best_net_fare,
+            best_route_summary: isNoneAvailable ? 'No Flights Available' : result.best_route_summary,
+            best_engine: result.best_engine || 'Skyscanner',
+            verdict: isNoneAvailable ? 'NO FLIGHTS AVAILABLE' : result.verdict,
+            availability_status: result.availability_status || (isNoneAvailable ? 'NONE_AVAILABLE' : 'FLIGHTS_AVAILABLE'),
+            user_notice: result.user_notice || null,
             last_checked: nowStr
           };
           const filteredWatch = localWatch.filter(w => !(w.origin === origin && w.destination === dest));
@@ -2016,6 +3662,7 @@ ${corridorCOut}`;
               deal_return_date: retD,
               currency: currency,
               timestamp: nowStr,
+              confidence_tier: c.confidence_tier || (c.is_live_verified ? 'LIVE_VERIFIED' : 'CONFIRMED_SCHEDULE_UNPRICED'),
               hacker_cart_links: fullHackerCartLinks,
               skyscanner_url: (c.skyscanner_url && c.skyscanner_url.includes('adultsv2')) ? c.skyscanner_url : buildSkyscannerUrl(origin, dest, depD, retD),
               google_flights_url: (c.google_flights_url && c.google_flights_url.includes('travel/flights?q=')) ? c.google_flights_url : buildGoogleFlightsUrl(origin, dest, depD, retD, currency),
@@ -2024,11 +3671,21 @@ ${corridorCOut}`;
           });
           localStorage.setItem('ps_local_flight_offers', JSON.stringify([...newOffers, ...localOffers]));
 
-          if (result.deal_booking_guide && result.deal_booking_guide.length > 0) {
-            const rBox = document.getElementById('flight-recipe-box');
+          const rBox = document.getElementById('flight-recipe-box');
+          if (isNoneAvailable) {
             rBox.style.display = 'block';
-            rBox.innerHTML = `<strong>💡 Step-by-Step Hacker Booking Guide for ${origin} ➔ ${dest} (${fmt(result.best_net_fare, currency)}):</strong>
-              <ol>${result.deal_booking_guide.map(s => `<li>${s}</li>`).join('')}</ol>`;
+            rBox.style.borderColor = 'var(--red, #ef4444)';
+            rBox.style.background = 'rgba(239, 68, 68, 0.08)';
+            rBox.innerHTML = `<strong>⚠️ No Flights Available:</strong> ${result.user_notice || 'No confirmed airline routes or seat inventory were found connecting ' + origin + ' and ' + dest + ' on the requested dates.'}<br><span style="font-size:0.8rem; color:var(--muted); margin-top:4px; display:inline-block;">Suggestions: Try broadening travel dates, checking alternative nearby gateway hubs (e.g. SYD/MEL, LAX/SFO, LHR/LGW), or searching one-way legs.</span>`;
+          } else {
+            rBox.style.display = 'block';
+            rBox.style.borderColor = 'var(--border)';
+            rBox.style.background = 'var(--surface-2)';
+            const limitedNotice = (newOffers.length <= 2)
+              ? `<div style="margin-bottom:8px;"><span class="badge" style="background:#1e3a8a; color:#93c5fd; font-weight:700;">⚡ Limited Availability: Only ${newOffers.length} genuine option(s) found</span></div>`
+              : '';
+            rBox.innerHTML = limitedNotice + `<strong>💡 Step-by-Step Hacker Booking Guide for ${origin} ➔ ${dest} (${fmt(result.best_net_fare, currency)}):</strong>
+              <ol>${(result.deal_booking_guide || []).map(s => `<li>${s}</li>`).join('')}</ol>`;
           }
 
           render();
@@ -2134,14 +3791,27 @@ ${corridorCOut}`;
         setPillState('st-synth', 'st-synth-badge', '', 'Waiting');
 
         try {
-          const scoutPrompt = `You are Subagent 1 (price-scout). Search live current in-stock prices in ${region} (${currency}) for "${product}" (${sku}). Check official stores, big-box retailers, specialist stores, and Amazon. Include exact product URLs, base price, shipping cost, and stock status.`;
-          const dealPrompt = `You are Subagent 2 (deal-hunter). Search OzBargain, Slickdeals, Reddit, cashback portals (ShopBack, TopCashback, Rakuten), active promo codes, discounted gift cards, and retailer Price-Beat guarantees for "${product}" in ${region} (${currency}).`;
-          const trustPrompt = `You are Subagent 3 (trust-auditor). Audit the historical low price for "${product}" in ${region} (${currency}), detect fake inflated MSRP discounts, and classify sellers into Authorized vs Grey Import.`;
+          const scoutPrompt = `You are Subagent 1 (price-scout). Search live in-stock prices in ${region} (${currency}) for "${product}" (${sku}).
+Search official brand webstores, major big-box retailers (JB Hi-Fi, Harvey Norman, The Good Guys, Officeworks, Bunnings, Best Buy, Amazon), price aggregators (StaticICE, PriceSpy, Google Shopping, Idealo, Geizhals), and international Amazon stores that ship to ${region}.
+Strict verification: Check exact SKU/variant, brand-new condition (not refurbished/open-box unless explicitly noted), live stock status, and extract shipping fees and GST/taxes. Return at least 5-10 verified listings.`;
+
+          const dealPrompt = `You are Subagent 2 (deal-hunter). Search community deal forums and discount sources for "${product}" in ${region} (${currency}):
+- Search OzBargain (for AU), Slickdeals (for US), HotUKDeals (for UK), Reddit (r/buildapcsales, r/deals, category subreddits), and Whirlpool forums for the most recent deal benchmarks (last 6 months).
+- Active promo codes, newsletter signup codes (5%-15%), eBay Plus, or corporate portal perks.
+- Current cashback rates on ShopBack, Cashrewards, TopCashback, and Rakuten.
+- Price-Beat Guarantees: Check if Officeworks 5% Price Beat, JB Hi-Fi live chat / "Ask for a Deal", or Bunnings can beat the cheapest in-stock competitor.
+- Discounted Gift Cards (e.g. 3%-8% off gift cards via supermarket promos or Macquarie/Suncorp/NRMA member portals).
+Return a structured breakdown of discounts and a step-by-step Ultimate Deal Stack Recipe.`;
+
+          const trustPrompt = `You are Subagent 3 (trust-auditor). Audit historical prices and seller legitimacy for "${product}" in ${region} (${currency}):
+- Historical price audit: check CamelCamelCamel, PriceSpy, Keepa, StaticICE for launch MSRP, typical street price, and all-time low to detect fake inflated MSRP sales.
+- Classify major sellers into Tier 1 (Authorized Local Retailer), Tier 2 (Reputable Marketplace), and Tier 3 (Grey Import / Offshore dropshipper warning).
+- Provide a clear verdict: STRONG BUY (Near All-Time Low), FAIR PRICE (Buy if needed now), or WAIT FOR SALE.`;
 
           const [scoutOut, dealOut, trustOut] = await Promise.all([
-            callGeminiGrounded(apiKey, scoutPrompt).then(r => { setPillState('st-scout', 'st-scout-badge', 'done', 'Done ✓'); return r; }),
-            sleep(350).then(() => callGeminiGrounded(apiKey, dealPrompt)).then(r => { setPillState('st-deal', 'st-deal-badge', 'done', 'Done ✓'); return r; }),
-            sleep(700).then(() => callGeminiGrounded(apiKey, trustPrompt)).then(r => { setPillState('st-trust', 'st-trust-badge', 'done', 'Done ✓'); return r; })
+            callGeminiGrounded(apiKey, scoutPrompt, false, 0.1).then(r => { setPillState('st-scout', 'st-scout-badge', 'done', 'Done ✓'); return r; }),
+            sleep(350).then(() => callGeminiGrounded(apiKey, dealPrompt, false, 0.25)).then(r => { setPillState('st-deal', 'st-deal-badge', 'done', 'Done ✓'); return r; }),
+            sleep(700).then(() => callGeminiGrounded(apiKey, trustPrompt, false, 0.0)).then(r => { setPillState('st-trust', 'st-trust-badge', 'done', 'Done ✓'); return r; })
           ]);
 
           setPillState('st-synth', 'st-synth-badge', 'running', 'Synthesizing...');
@@ -2177,7 +3847,7 @@ ${dealOut}
 --- TRUST AUDITOR ---
 ${trustOut}`;
 
-          const rawJson = await callGeminiGrounded(apiKey, synthPrompt, true);
+          const rawJson = await callGeminiGrounded(apiKey, synthPrompt, true, 0.1);
           const result = parseJsonSafe(rawJson);
           setPillState('st-synth', 'st-synth-badge', 'done', 'Complete ✓');
 

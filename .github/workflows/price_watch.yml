@@ -88,13 +88,23 @@ jobs:
           cache: "pip"
           cache-dependency-path: "cloud/requirements.txt"
 
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Install dependencies
-        run: pip install -r cloud/requirements.txt
+        run: |
+          pip install -r cloud/requirements.txt
+          npm install
 
       - name: Run Multi-Agent Deep Orchestrator
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          ROUTESTACK_API_KEY: ${{ secrets.ROUTESTACK_API_KEY || 'rst_jWw6U4c796bpqAOJA82HsoxYroOT4yli' }}
+          ROUTESTACK_API_SECRET: ${{ secrets.ROUTESTACK_API_SECRET || '524655d09798585cc4f5a94c41e99660229c2f4f7c92af2d18c5fefb4c19aef8' }}
+          ROUTESTACK_MCP_URL: ${{ secrets.ROUTESTACK_MCP_URL || 'https://mcp.routestack.ai/sse' }}
         run: |
           if [ "${{ inputs.mode }}" = "flight" ]; then
             BAG_FLAG=""

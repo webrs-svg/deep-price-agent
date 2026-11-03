@@ -11,6 +11,9 @@ env/
 .env.*
 *.local
 
+# Node.js
+node_modules/
+
 # OS / Editor Files
 .DS_Store
 Thumbs.db
